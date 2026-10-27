@@ -34,6 +34,10 @@ IDS = {name: oid(name) for name in [
     "projectConfigList", "projectDebug", "projectRelease",
     "targetConfigList", "targetDebug", "targetRelease",
     "corePackageRef", "coreProductDep", "coreBuildFile",
+    "testProduct", "syncTestGroup", "testTarget",
+    "testSourcesPhase", "testFrameworksPhase", "testResourcesPhase",
+    "testConfigList", "testDebug", "testRelease",
+    "testContainerProxy", "testTargetDependency",
 ]}
 
 
@@ -126,6 +130,30 @@ TARGET_COMMON = {
 }
 
 
+TARGET_DEBUG = {
+    **TARGET_COMMON,
+    # Ad-hoc signed test bundles cannot be injected into a hardened process
+    # (library validation); the hardened runtime is only needed for Release.
+    "ENABLE_HARDENED_RUNTIME": "NO",
+}
+
+TEST_COMMON = {
+    "BUNDLE_LOADER": "$(TEST_HOST)",
+    "CODE_SIGN_IDENTITY": "-",
+    "CODE_SIGN_STYLE": "Manual",
+    "CURRENT_PROJECT_VERSION": BUILD_NUMBER,
+    "DEVELOPMENT_TEAM": "",
+    "GENERATE_INFOPLIST_FILE": "YES",
+    "MACOSX_DEPLOYMENT_TARGET": DEPLOYMENT_TARGET,
+    "MARKETING_VERSION": MARKETING_VERSION,
+    "PRODUCT_BUNDLE_IDENTIFIER": BUNDLE_ID + "Tests",
+    "PRODUCT_NAME": "$(TARGET_NAME)",
+    "SWIFT_EMIT_LOC_STRINGS": "NO",
+    "SWIFT_VERSION": "5.0",
+    "TEST_HOST": f"$(BUILT_PRODUCTS_DIR)/{PROJECT}.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/{PROJECT}",
+}
+
+
 def build_configuration(key: str, name: str, settings: dict) -> str:
     return (
         f"\t\t{IDS[key]} /* {name} */ = {{\n"
@@ -157,12 +185,28 @@ def pbxproj() -> str:
 		{i['entitlementsRef']} /* {PROJECT}.entitlements */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = {PROJECT}.entitlements; sourceTree = "<group>"; }};
 		{i['infoPlistRef']} /* Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; }};
 		{i['readmeRef']} /* README.md */ = {{isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; }};
+		{i['testProduct']} /* {PROJECT}Tests.xctest */ = {{isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = {PROJECT}Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; }};
 /* End PBXFileReference section */
+
+/* Begin PBXContainerItemProxy section */
+		{i['testContainerProxy']} /* PBXContainerItemProxy */ = {{
+			isa = PBXContainerItemProxy;
+			containerPortal = {i['project']} /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = {i['appTarget']};
+			remoteInfo = {PROJECT};
+		}};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		{i['syncAppGroup']} /* {PROJECT} */ = {{
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = {PROJECT};
+			sourceTree = "<group>";
+		}};
+		{i['syncTestGroup']} /* {PROJECT}Tests */ = {{
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = {PROJECT}Tests;
 			sourceTree = "<group>";
 		}};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -176,6 +220,13 @@ def pbxproj() -> str:
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{i['testFrameworksPhase']} /* Frameworks */ = {{
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -184,6 +235,7 @@ def pbxproj() -> str:
 			children = (
 				{i['readmeRef']} /* README.md */,
 				{i['syncAppGroup']} /* {PROJECT} */,
+				{i['syncTestGroup']} /* {PROJECT}Tests */,
 				{i['configGroup']} /* Config */,
 				{i['productsGroup']} /* Products */,
 			);
@@ -202,6 +254,7 @@ def pbxproj() -> str:
 			isa = PBXGroup;
 			children = (
 				{i['appProduct']} /* {PROJECT}.app */,
+				{i['testProduct']} /* {PROJECT}Tests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -232,6 +285,29 @@ def pbxproj() -> str:
 			productReference = {i['appProduct']} /* {PROJECT}.app */;
 			productType = "com.apple.product-type.application";
 		}};
+		{i['testTarget']} /* {PROJECT}Tests */ = {{
+			isa = PBXNativeTarget;
+			buildConfigurationList = {i['testConfigList']} /* Build configuration list for PBXNativeTarget "{PROJECT}Tests" */;
+			buildPhases = (
+				{i['testSourcesPhase']} /* Sources */,
+				{i['testFrameworksPhase']} /* Frameworks */,
+				{i['testResourcesPhase']} /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				{i['testTargetDependency']} /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				{i['syncTestGroup']} /* {PROJECT}Tests */,
+			);
+			name = {PROJECT}Tests;
+			packageProductDependencies = (
+			);
+			productName = {PROJECT}Tests;
+			productReference = {i['testProduct']} /* {PROJECT}Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		}};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -244,6 +320,10 @@ def pbxproj() -> str:
 				TargetAttributes = {{
 					{i['appTarget']} = {{
 						CreatedOnToolsVersion = 16.0;
+					}};
+					{i['testTarget']} = {{
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = {i['appTarget']};
 					}};
 				}};
 			}};
@@ -266,12 +346,20 @@ def pbxproj() -> str:
 			projectRoot = "";
 			targets = (
 				{i['appTarget']} /* {PROJECT} */,
+				{i['testTarget']} /* {PROJECT}Tests */,
 			);
 		}};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		{i['resourcesPhase']} /* Resources */ = {{
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+		{i['testResourcesPhase']} /* Resources */ = {{
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -288,10 +376,25 @@ def pbxproj() -> str:
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{i['testSourcesPhase']} /* Sources */ = {{
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		{i['testTargetDependency']} /* PBXTargetDependency */ = {{
+			isa = PBXTargetDependency;
+			target = {i['appTarget']} /* {PROJECT} */;
+			targetProxy = {i['testContainerProxy']} /* PBXContainerItemProxy */;
+		}};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
-{build_configuration('projectDebug', 'Debug', PROJECT_DEBUG)}{build_configuration('projectRelease', 'Release', PROJECT_RELEASE)}{build_configuration('targetDebug', 'Debug', TARGET_COMMON)}{build_configuration('targetRelease', 'Release', TARGET_COMMON)}/* End XCBuildConfiguration section */
+{build_configuration('projectDebug', 'Debug', PROJECT_DEBUG)}{build_configuration('projectRelease', 'Release', PROJECT_RELEASE)}{build_configuration('targetDebug', 'Debug', TARGET_DEBUG)}{build_configuration('targetRelease', 'Release', TARGET_COMMON)}{build_configuration('testDebug', 'Debug', TEST_COMMON)}{build_configuration('testRelease', 'Release', TEST_COMMON)}/* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
 		{i['projectConfigList']} /* Build configuration list for PBXProject "{PROJECT}" */ = {{
@@ -308,6 +411,15 @@ def pbxproj() -> str:
 			buildConfigurations = (
 				{i['targetDebug']} /* Debug */,
 				{i['targetRelease']} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
+		{i['testConfigList']} /* Build configuration list for PBXNativeTarget "{PROJECT}Tests" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{i['testDebug']} /* Debug */,
+				{i['testRelease']} /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -370,10 +482,10 @@ def scheme() -> str:
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "IslandCoreTests"
-               BuildableName = "IslandCoreTests"
-               BlueprintName = "IslandCoreTests"
-               ReferencedContainer = "container:{CORE_PACKAGE_PATH}">
+               BlueprintIdentifier = "{IDS['testTarget']}"
+               BuildableName = "{PROJECT}Tests.xctest"
+               BlueprintName = "{PROJECT}Tests"
+               ReferencedContainer = "container:{PROJECT}.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>

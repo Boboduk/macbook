@@ -33,10 +33,10 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "IslandCoreTests"
-               BuildableName = "IslandCoreTests"
-               BlueprintName = "IslandCoreTests"
-               ReferencedContainer = "container:Packages/IslandCore">
+               BlueprintIdentifier = "0360DAA493F241459B684D3D"
+               BuildableName = "AlcoveInspiredTests.xctest"
+               BlueprintName = "AlcoveInspiredTests"
+               ReferencedContainer = "container:AlcoveInspired.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>

@@ -15,12 +15,28 @@
 		339B395D16FE98092D46893F /* AlcoveInspired.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AlcoveInspired.entitlements; sourceTree = "<group>"; };
 		3BE82F4A232972C6B06520A4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A16ACD3207B4A4A31669AEED /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		55D806B04198BC33CC8F2C54 /* AlcoveInspiredTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AlcoveInspiredTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXContainerItemProxy section */
+		008D241F100EA40ABC3BEC69 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C1F33C982ECEBA74FF5FAD81 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 428ADBFEAFBA5B2278F449AC;
+			remoteInfo = AlcoveInspired;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C7F55B8D2F7B79980FDCCF26 /* AlcoveInspired */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = AlcoveInspired;
+			sourceTree = "<group>";
+		};
+		B55E480E28608AC0F8C82EE1 /* AlcoveInspiredTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AlcoveInspiredTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -34,6 +50,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F2BA260DE6B91F3ADA0BC194 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -42,6 +65,7 @@
 			children = (
 				A16ACD3207B4A4A31669AEED /* README.md */,
 				C7F55B8D2F7B79980FDCCF26 /* AlcoveInspired */,
+				B55E480E28608AC0F8C82EE1 /* AlcoveInspiredTests */,
 				EF78C113D35DE73117799D58 /* Config */,
 				FF5B19808ED40EC29252EC38 /* Products */,
 			);
@@ -60,6 +84,7 @@
 			isa = PBXGroup;
 			children = (
 				4A6F3BCBC63D1BEAB85A181E /* AlcoveInspired.app */,
+				55D806B04198BC33CC8F2C54 /* AlcoveInspiredTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -90,6 +115,29 @@
 			productReference = 4A6F3BCBC63D1BEAB85A181E /* AlcoveInspired.app */;
 			productType = "com.apple.product-type.application";
 		};
+		0360DAA493F241459B684D3D /* AlcoveInspiredTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 532822486041851E3235CFF4 /* Build configuration list for PBXNativeTarget "AlcoveInspiredTests" */;
+			buildPhases = (
+				3D11277929DD64F33549EF8F /* Sources */,
+				F2BA260DE6B91F3ADA0BC194 /* Frameworks */,
+				EFF5E283933BA60FD849F458 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8BA38811A89829F8AAE88994 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B55E480E28608AC0F8C82EE1 /* AlcoveInspiredTests */,
+			);
+			name = AlcoveInspiredTests;
+			packageProductDependencies = (
+			);
+			productName = AlcoveInspiredTests;
+			productReference = 55D806B04198BC33CC8F2C54 /* AlcoveInspiredTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -102,6 +150,10 @@
 				TargetAttributes = {
 					428ADBFEAFBA5B2278F449AC = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					0360DAA493F241459B684D3D = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 428ADBFEAFBA5B2278F449AC;
 					};
 				};
 			};
@@ -124,12 +176,20 @@
 			projectRoot = "";
 			targets = (
 				428ADBFEAFBA5B2278F449AC /* AlcoveInspired */,
+				0360DAA493F241459B684D3D /* AlcoveInspiredTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		893A6C756ED323DB4DFE7B5E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EFF5E283933BA60FD849F458 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -146,7 +206,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3D11277929DD64F33549EF8F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		8BA38811A89829F8AAE88994 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 428ADBFEAFBA5B2278F449AC /* AlcoveInspired */;
+			targetProxy = 008D241F100EA40ABC3BEC69 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		985C21A129A6BAC94A17A05D /* Debug */ = {
@@ -224,7 +299,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
-				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Config/Info.plist;
@@ -269,6 +344,44 @@
 			};
 			name = Release;
 		};
+		7327E403A9FA212F747BEC3A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.boboduk.AlcoveInspiredTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AlcoveInspired.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AlcoveInspired";
+			};
+			name = Debug;
+		};
+		32DD49A0FC75C4B043856ADD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.boboduk.AlcoveInspiredTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AlcoveInspired.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AlcoveInspired";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -286,6 +399,15 @@
 			buildConfigurations = (
 				908148591071182B5F10FA86 /* Debug */,
 				1E58CA0951D62BD070254288 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		532822486041851E3235CFF4 /* Build configuration list for PBXNativeTarget "AlcoveInspiredTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7327E403A9FA212F747BEC3A /* Debug */,
+				32DD49A0FC75C4B043856ADD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

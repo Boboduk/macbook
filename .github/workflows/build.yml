@@ -107,6 +107,14 @@ jobs:
         if: steps.debug.outcome == 'success'
         run: Scripts/ci-smoke-test.sh build/DerivedDataDebug/Build/Products/Debug/AlcoveInspired.app build/screenshots 2>&1 | tee build/smoke-test.log
 
+      - name: Contact sheet of the screenshots (printed into the log)
+        if: steps.smoke.outcome != 'skipped'
+        continue-on-error: true
+        run: |
+          python3 -m venv /tmp/venv
+          /tmp/venv/bin/pip install --quiet pillow
+          /tmp/venv/bin/python Scripts/ci-contact-sheet.py build/screenshots --print-base64
+
       - name: Package
         if: steps.release.outcome == 'success'
         run: ditto -c -k --keepParent build/DerivedData/Build/Products/Release/AlcoveInspired.app build/AlcoveInspired.zip
