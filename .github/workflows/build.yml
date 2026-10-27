@@ -26,7 +26,9 @@ jobs:
   macos:
     name: macOS build, tests and smoke test
     runs-on: macos-15
-    timeout-minutes: 40
+    timeout-minutes: 45
+    # Every step runs even if an earlier one failed, so one run reports all
+    # problems; the final "Summary" step decides the job result.
     steps:
       - uses: actions/checkout@v4
 
@@ -34,17 +36,21 @@ jobs:
         run: |
           XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
           sudo xcode-select -s "$XCODE"
-          xcodebuild -version
-          swift --version
-          sw_vers
+          mkdir -p build
+          { xcodebuild -version; swift --version; sw_vers; } | tee build/toolchain.log
 
       - name: IslandCore tests (SwiftPM)
-        run: swift test --package-path Packages/IslandCore
-
-      - name: Build app (Xcode, Release)
+        id: core
+        continue-on-error: true
         run: |
           set -o pipefail
-          mkdir -p build
+          swift test --package-path Packages/IslandCore 2>&1 | tee build/core-tests.log | grep -E "error:|Executed|failed" || true
+          grep -q "with 0 failures" build/core-tests.log && ! grep -q "error:" build/core-tests.log
+
+      - name: Build app (Xcode, Release)
+        id: release
+        continue-on-error: true
+        run: |
           xcodebuild \
             -project AlcoveInspired.xcodeproj \
             -scheme AlcoveInspired \
@@ -52,26 +58,37 @@ jobs:
             -destination 'generic/platform=macOS' \
             -derivedDataPath build/DerivedData \
             CODE_SIGN_IDENTITY=- \
-            build 2>&1 | tee build/xcodebuild-release.log | grep -E "error:|warning:|\*\* BUILD" || true
+            build > build/xcodebuild-release.log 2>&1 || true
+          grep -E "error:|\*\* BUILD" build/xcodebuild-release.log | sort -u | head -60 || true
           test -d build/DerivedData/Build/Products/Release/AlcoveInspired.app
 
       - name: Tests through the Xcode scheme
+        id: schemetests
+        continue-on-error: true
         run: |
-          set -o pipefail
           xcodebuild test \
             -project AlcoveInspired.xcodeproj \
             -scheme AlcoveInspired \
             -destination 'platform=macOS' \
             -derivedDataPath build/DerivedDataTests \
-            CODE_SIGN_IDENTITY=- 2>&1 | tee build/xcodebuild-test.log | grep -E "error:|Executed|\*\* TEST" || true
+            CODE_SIGN_IDENTITY=- > build/xcodebuild-test.log 2>&1 || true
+          grep -E "error:|Executed|\*\* TEST" build/xcodebuild-test.log | sort -u | head -30 || true
           grep -q "\*\* TEST SUCCEEDED \*\*" build/xcodebuild-test.log
 
       - name: Build app (SwiftPM fallback)
-        run: Scripts/build-app.sh --spm --output build/spm
-
-      - name: Build Debug app for UI smoke test
+        id: spm
+        continue-on-error: true
         run: |
           set -o pipefail
+          Scripts/build-app.sh --spm --output build/spm > build/spm-build.log 2>&1
+          status=$?
+          grep -E "error:|Built " build/spm-build.log | sort -u | head -40 || true
+          exit $status
+
+      - name: Build Debug app for the smoke test
+        id: debug
+        continue-on-error: true
+        run: |
           xcodebuild \
             -project AlcoveInspired.xcodeproj \
             -scheme AlcoveInspired \
@@ -79,25 +96,25 @@ jobs:
             -destination 'generic/platform=macOS' \
             -derivedDataPath build/DerivedDataDebug \
             CODE_SIGN_IDENTITY=- \
-            build 2>&1 | tail -3
+            build > build/xcodebuild-debug.log 2>&1 || true
+          test -d build/DerivedDataDebug/Build/Products/Debug/AlcoveInspired.app
 
       - name: Smoke test (launch, island states, screenshots)
-        run: Scripts/ci-smoke-test.sh build/DerivedDataDebug/Build/Products/Debug/AlcoveInspired.app build/screenshots
+        id: smoke
+        continue-on-error: true
+        if: steps.debug.outcome == 'success'
+        run: Scripts/ci-smoke-test.sh build/DerivedDataDebug/Build/Products/Debug/AlcoveInspired.app build/screenshots 2>&1 | tee build/smoke-test.log
 
       - name: Package
-        if: always()
-        run: |
-          if [ -d build/DerivedData/Build/Products/Release/AlcoveInspired.app ]; then
-            ditto -c -k --keepParent build/DerivedData/Build/Products/Release/AlcoveInspired.app build/AlcoveInspired.zip
-          fi
+        if: steps.release.outcome == 'success'
+        run: ditto -c -k --keepParent build/DerivedData/Build/Products/Release/AlcoveInspired.app build/AlcoveInspired.zip
 
       - name: Upload app
-        if: always()
+        if: steps.release.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: AlcoveInspired-app
           path: build/AlcoveInspired.zip
-          if-no-files-found: ignore
 
       - name: Upload logs and screenshots
         if: always()
@@ -108,3 +125,19 @@ jobs:
             build/*.log
             build/screenshots
           if-no-files-found: ignore
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "core=${{ steps.core.outcome }} release=${{ steps.release.outcome }} schemetests=${{ steps.schemetests.outcome }} spm=${{ steps.spm.outcome }} debug=${{ steps.debug.outcome }} smoke=${{ steps.smoke.outcome }}"
+          echo "---- unique compiler errors (all logs) ----"
+          grep -h -E "^/.*: error: " build/*.log 2>/dev/null | sed -E 's#^/Users/runner/work/macbook/macbook/##' | sort -u | head -80 || true
+          echo "---- unique compiler warnings (app sources) ----"
+          grep -h -E "^/.*AlcoveInspired/.*: warning: " build/xcodebuild-release.log 2>/dev/null | sed -E 's#^/Users/runner/work/macbook/macbook/##' | sort -u | head -60 || true
+          echo "---- smoke test ----"
+          tail -25 build/smoke-test.log 2>/dev/null || true
+          test "${{ steps.core.outcome }}" = success
+          test "${{ steps.release.outcome }}" = success
+          test "${{ steps.schemetests.outcome }}" = success
+          test "${{ steps.spm.outcome }}" = success
+          test "${{ steps.smoke.outcome }}" = success

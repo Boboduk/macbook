@@ -1,5 +1,10 @@
 import XCTest
 @testable import IslandCore
+#if canImport(CoreGraphics)
+// On Apple platforms CGRect/CGSize initializers and Equatable live in the
+// CoreGraphics overlay, which Foundation no longer re-exports.
+import CoreGraphics
+#endif
 
 final class LayoutTests: XCTestCase {
     private let metrics = NotchMetrics.preview

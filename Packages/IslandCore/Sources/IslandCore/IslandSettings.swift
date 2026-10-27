@@ -1,4 +1,9 @@
 import Foundation
+#if canImport(CoreGraphics)
+// On Apple platforms CGRect/CGSize initializers and Equatable live in the
+// CoreGraphics overlay, which Foundation no longer re-exports.
+import CoreGraphics
+#endif
 
 public enum DisplayTarget: String, Codable, CaseIterable, Identifiable {
     /// Built-in display with a notch if present, otherwise the main display.

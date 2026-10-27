@@ -1,4 +1,9 @@
 import Foundation
+#if canImport(CoreGraphics)
+// On Apple platforms CGRect/CGSize initializers and Equatable live in the
+// CoreGraphics overlay, which Foundation no longer re-exports.
+import CoreGraphics
+#endif
 
 /// Geometry of the camera housing on the display the island lives on.
 public struct NotchMetrics: Equatable {
