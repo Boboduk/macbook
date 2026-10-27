@@ -24,6 +24,15 @@ def main() -> None:
     folder = sys.argv[1]
     shots = sorted(glob.glob(os.path.join(folder, "*.png")))
     tiles = []
+    for path in sorted(glob.glob(os.path.join(folder, "window", "*.png"))):
+        # The island panel alone, composited on gray so the black shape and
+        # its corners are visible.
+        window = Image.open(path).convert("RGBA")
+        backdrop = Image.new("RGBA", window.size, (150, 150, 155, 255))
+        backdrop.alpha_composite(window)
+        factor = 2 if window.width >= 1100 else 1
+        size = (int(window.width / factor * SCALE), int(window.height / factor * SCALE))
+        tiles.append(("island: " + os.path.splitext(os.path.basename(path))[0], backdrop.convert("RGB").resize(size, Image.LANCZOS)))
     for path in shots:
         image = Image.open(path).convert("RGB")
         # Retina screenshots are 2x; normalize to points.
@@ -39,7 +48,7 @@ def main() -> None:
         return
 
     label_height = 18
-    tile_width = tiles[0][1].width
+    tile_width = max(tile.width for _, tile in tiles)
     sheet = Image.new("RGB", (tile_width, sum(t.height + label_height for _, t in tiles)), (255, 255, 255))
     draw = ImageDraw.Draw(sheet)
     y = 0

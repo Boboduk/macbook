@@ -11,13 +11,25 @@ set -uo pipefail
 
 APP="$1"
 OUT="$2"
-mkdir -p "$OUT"
+mkdir -p "$OUT/window"
 BIN="$APP/Contents/MacOS/AlcoveInspired"
 BUNDLE_ID="$(defaults read "$(cd "$APP" && pwd)/Contents/Info" CFBundleIdentifier)"
 REPORTS="$HOME/Library/Logs/DiagnosticReports"
 failures=0
 
-# Start from default settings.
+# Helper that lists the app's windows (to capture the island panel alone).
+WINDOW_LIST="$OUT/window-list"
+swiftc -O "$(dirname "$0")/ci-window-list.swift" -o "$WINDOW_LIST" 2>/dev/null || WINDOW_LIST=""
+
+capture_island() {
+  # The island panel is the app window with the highest layer.
+  [[ -n "$WINDOW_LIST" ]] || return 0
+  local wid
+  wid="$("$WINDOW_LIST" "$1" | sort -k2 -n | tail -1 | cut -d' ' -f1)"
+  [[ -n "$wid" ]] && screencapture -x -o -l "$wid" "$2" 2>/dev/null || true
+}
+
+# Start from default settings and no saved timer.
 defaults delete "$BUNDLE_ID" >/dev/null 2>&1 || true
 before_reports="$(ls "$REPORTS" 2>/dev/null | grep -c AlcoveInspired || true)"
 
@@ -29,6 +41,7 @@ if kill -0 "$pid" 2>/dev/null; then
   # The second sample of `top` reflects the last interval only.
   top -l 2 -s 3 -pid "$pid" -stats pid,command,cpu,mem,threads | tail -2 | tee "$OUT/idle-usage.txt"
   screencapture -x "$OUT/idle.png" 2>/dev/null || echo "(screencapture unavailable)"
+  capture_island "$pid" "$OUT/window/idle.png"
   kill "$pid"; wait "$pid" 2>/dev/null
 else
   echo "::error::App exited while idle"; cat "$OUT/idle.log"; failures=$((failures + 1))
@@ -46,7 +59,10 @@ for state in expanded-music expanded-timer hud-volume hud-brightness banner-noti
     continue
   fi
   screencapture -x "$OUT/$state.png" 2>/dev/null || echo "(screencapture unavailable)"
+  capture_island "$pid" "$OUT/window/$state.png"
   kill "$pid"; wait "$pid" 2>/dev/null
+  # Each state starts clean (a running timer would otherwise be restored).
+  defaults delete "$BUNDLE_ID" >/dev/null 2>&1 || true
 done
 
 after_reports="$(ls "$REPORTS" 2>/dev/null | grep -c AlcoveInspired || true)"

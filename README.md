@@ -65,8 +65,9 @@ Alcove и Apple проект отношения не имеет. Что удал
 Нужен Xcode 16 или новее (проект использует синхронизируемые папки Xcode 16).
 
 1. Откройте `AlcoveInspired.xcodeproj`.
-2. Выберите схему **AlcoveInspired** → *My Mac* и нажмите ⌘R. Тесты `IslandCore` запускаются
-   по ⌘U.
+2. Выберите схему **AlcoveInspired** → *My Mac* и нажмите ⌘R. ⌘U запускает интеграционные
+   тесты приложения; тесты ядра — `swift test --package-path Packages/IslandCore` (или откройте
+   `Packages/IslandCore/Package.swift` в Xcode).
 3. Чтобы разрешения «Универсальный доступ» и «Автоматизация» не сбрасывались после каждой
    пересборки, в *Signing & Capabilities* выберите свою команду (Team) и *Automatic signing*.
    По умолчанию проект подписывается ad-hoc («Sign to Run Locally»), а macOS привязывает
@@ -133,8 +134,12 @@ AlcoveInspired/                 ← приложение (всё содержи�
   UI/         IslandRootView, IslandShape, Compact/Banner/Expanded, ActivityViews, Components, Settings
   Resources/  Assets.xcassets (иконка, акцентный цвет), ru.lproj
 
+AlcoveInspiredTests/             ← интеграционные тесты слоя приложения (запускаются внутри приложения):
+                                   AppleScript, координатор, таймер, настройки, панель, геометрия экранов
 Config/       Info.plist, entitlements
-Scripts/      build-app.sh, ci-smoke-test.sh, test-core-linux.sh, generate_xcodeproj.py, generate_icon.py
+Scripts/      build-app.sh, ci-smoke-test.sh, ci-contact-sheet.py, test-core-linux.sh,
+              generate_xcodeproj.py, generate_icon.py
+.github/workflows/build.yml      ← CI: тесты на Linux и macOS, сборки Xcode/SwiftPM, смоук-тест
 ```
 
 Поток данных:
