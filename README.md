@@ -59,11 +59,15 @@ Alcove и Apple проект отношения не имеет. Что удал
 
 1. Скачайте и распакуйте `AlcoveInspired.zip`.
 2. Перенесите `AlcoveInspired.app` в `/Applications`.
-3. Сборка подписана ad-hoc, а не сертификатом разработчика, поэтому при первом запуске
-   откройте её через **правый клик → Открыть** или выполните:
-   ```bash
-   xattr -dr com.apple.quarantine /Applications/AlcoveInspired.app
-   ```
+3. Сборка подписана ad-hoc, а не сертификатом разработчика Apple, поэтому macOS при первом
+   запуске её заблокирует. Варианты:
+   * **Системные настройки → Конфиденциальность и безопасность** → внизу «AlcoveInspired
+     заблокировано» → **Всё равно открыть** (macOS 15 больше не предлагает обход через правый клик);
+   * или в Терминале:
+     ```bash
+     xattr -dr com.apple.quarantine /Applications/AlcoveInspired.app
+     open /Applications/AlcoveInspired.app
+     ```
 
 ### Сборка в Xcode
 
