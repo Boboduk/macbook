@@ -13,7 +13,7 @@ final class ParsingTests: XCTestCase {
         XCTAssertEqual(snapshot.state, .playing)
         XCTAssertEqual(snapshot.track?.title, "Song")
         XCTAssertEqual(snapshot.track?.duration, 215)
-        XCTAssertEqual(snapshot.track?.id, "1234567890123")
+        XCTAssertEqual(snapshot.track?.id, "0000011F71FB04CB", "same format as AppleScript's persistent ID")
         XCTAssertNil(snapshot.position, "Music does not send a position; it is fetched separately")
     }
 
@@ -30,6 +30,10 @@ final class ParsingTests: XCTestCase {
         XCTAssertEqual(snapshot.position, PlaybackPosition(elapsed: 42.5, timestamp: now, rate: 0))
     }
 
+    func testNegativePersistentIDUsesTwosComplementHex() {
+        XCTAssertEqual(NowPlayingParser.hexIdentifier(-1), "FFFFFFFFFFFFFFFF")
+    }
+
     func testStoppedNotificationHasNoTrack() {
         let snapshot = NowPlayingParser.parseNotification(["Player State": "Stopped"], source: .appleMusic, at: now)
         XCTAssertEqual(snapshot.state, .stopped)
@@ -44,12 +48,12 @@ final class ParsingTests: XCTestCase {
     }
 
     func testScriptFieldsMusic() {
-        let fields: [Any?] = ["playing", "Song", "Artist", "Album", 215.5, 12.25, "ABCDEF"]
+        let fields: [Any?] = ["playing", "Song", "Artist", "Album", 215.5, 12.25, "0000011f71fb04cb"]
         let snapshot = NowPlayingParser.parseScriptFields(fields, source: .appleMusic, at: now)
         XCTAssertEqual(snapshot?.track?.duration, 215.5)
         XCTAssertEqual(snapshot?.position?.elapsed, 12.25)
         XCTAssertEqual(snapshot?.position?.rate, 1)
-        XCTAssertEqual(snapshot?.track?.id, "ABCDEF")
+        XCTAssertEqual(snapshot?.track?.id, "0000011F71FB04CB")
     }
 
     func testScriptFieldsSpotifyDurationInMilliseconds() {

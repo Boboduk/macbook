@@ -153,7 +153,8 @@ public enum NowPlayingParser {
         var duration = number(fields[4])
         if source == .spotify { duration = duration.map { $0 / 1000 } }
         let elapsed = number(fields[5]) ?? 0
-        let identifier = string(fields[6]).flatMap { $0.isEmpty ? nil : $0 }
+        let rawIdentifier = string(fields[6]).flatMap { $0.isEmpty ? nil : $0 }
+        let identifier = source == .appleMusic ? rawIdentifier?.uppercased() : rawIdentifier
 
         guard state != .stopped, !(title.isEmpty && artist.isEmpty && album.isEmpty) else {
             return NowPlayingSnapshot(source: source, track: nil, state: .stopped, position: nil)
@@ -195,13 +196,20 @@ public enum NowPlayingParser {
         }
     }
 
+    /// Music reports the persistent ID as a signed 64-bit number in
+    /// notifications and as 16 hex digits in AppleScript; normalize both to hex
+    /// so the same track is never mistaken for a new one.
     private static func identifierString(_ value: Any) -> String? {
         switch value {
-        case let string as String: return string.isEmpty ? nil : string
-        case let int as Int: return String(int)
-        case let int64 as Int64: return String(int64)
-        case let number as NSNumber: return number.stringValue
+        case let string as String: return string.isEmpty ? nil : string.uppercased()
+        case let int as Int: return hexIdentifier(Int64(int))
+        case let int64 as Int64: return hexIdentifier(int64)
+        case let number as NSNumber: return hexIdentifier(number.int64Value)
         default: return nil
         }
+    }
+
+    public static func hexIdentifier(_ value: Int64) -> String {
+        String(format: "%016llX", UInt64(bitPattern: value))
     }
 }

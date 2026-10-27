@@ -1,0 +1,110 @@
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-linux:
+    name: IslandCore tests (Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.1-noble
+    steps:
+      - uses: actions/checkout@v4
+      - name: swift test
+        run: swift test --package-path Packages/IslandCore
+
+  macos:
+    name: macOS build, tests and smoke test
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        run: |
+          XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+          swift --version
+          sw_vers
+
+      - name: IslandCore tests (SwiftPM)
+        run: swift test --package-path Packages/IslandCore
+
+      - name: Build app (Xcode, Release)
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild \
+            -project AlcoveInspired.xcodeproj \
+            -scheme AlcoveInspired \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGN_IDENTITY=- \
+            build 2>&1 | tee build/xcodebuild-release.log | grep -E "error:|warning:|\*\* BUILD" || true
+          test -d build/DerivedData/Build/Products/Release/AlcoveInspired.app
+
+      - name: Tests through the Xcode scheme
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project AlcoveInspired.xcodeproj \
+            -scheme AlcoveInspired \
+            -destination 'platform=macOS' \
+            -derivedDataPath build/DerivedDataTests \
+            CODE_SIGN_IDENTITY=- 2>&1 | tee build/xcodebuild-test.log | grep -E "error:|Executed|\*\* TEST" || true
+          grep -q "\*\* TEST SUCCEEDED \*\*" build/xcodebuild-test.log
+
+      - name: Build app (SwiftPM fallback)
+        run: Scripts/build-app.sh --spm --output build/spm
+
+      - name: Build Debug app for UI smoke test
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project AlcoveInspired.xcodeproj \
+            -scheme AlcoveInspired \
+            -configuration Debug \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build/DerivedDataDebug \
+            CODE_SIGN_IDENTITY=- \
+            build 2>&1 | tail -3
+
+      - name: Smoke test (launch, island states, screenshots)
+        run: Scripts/ci-smoke-test.sh build/DerivedDataDebug/Build/Products/Debug/AlcoveInspired.app build/screenshots
+
+      - name: Package
+        if: always()
+        run: |
+          if [ -d build/DerivedData/Build/Products/Release/AlcoveInspired.app ]; then
+            ditto -c -k --keepParent build/DerivedData/Build/Products/Release/AlcoveInspired.app build/AlcoveInspired.zip
+          fi
+
+      - name: Upload app
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AlcoveInspired-app
+          path: build/AlcoveInspired.zip
+          if-no-files-found: ignore
+
+      - name: Upload logs and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics
+          path: |
+            build/*.log
+            build/screenshots
+          if-no-files-found: ignore

@@ -1,0 +1,310 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		43F527816A4B773BA0C6E3FC /* IslandCore in Frameworks */ = {isa = PBXBuildFile; productRef = A6D7596B626E0383B2ADCE5B /* IslandCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		4A6F3BCBC63D1BEAB85A181E /* AlcoveInspired.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AlcoveInspired.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		339B395D16FE98092D46893F /* AlcoveInspired.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AlcoveInspired.entitlements; sourceTree = "<group>"; };
+		3BE82F4A232972C6B06520A4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A16ACD3207B4A4A31669AEED /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		C7F55B8D2F7B79980FDCCF26 /* AlcoveInspired */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AlcoveInspired;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		82BD66A833578846F9808587 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				43F527816A4B773BA0C6E3FC /* IslandCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		10F2AE09B0BA74F66FDD0A1F = {
+			isa = PBXGroup;
+			children = (
+				A16ACD3207B4A4A31669AEED /* README.md */,
+				C7F55B8D2F7B79980FDCCF26 /* AlcoveInspired */,
+				EF78C113D35DE73117799D58 /* Config */,
+				FF5B19808ED40EC29252EC38 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		EF78C113D35DE73117799D58 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				3BE82F4A232972C6B06520A4 /* Info.plist */,
+				339B395D16FE98092D46893F /* AlcoveInspired.entitlements */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		FF5B19808ED40EC29252EC38 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4A6F3BCBC63D1BEAB85A181E /* AlcoveInspired.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		428ADBFEAFBA5B2278F449AC /* AlcoveInspired */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D8718B69A342AD15AE78A112 /* Build configuration list for PBXNativeTarget "AlcoveInspired" */;
+			buildPhases = (
+				24B670788EAE6D8AA2BC6CE9 /* Sources */,
+				82BD66A833578846F9808587 /* Frameworks */,
+				893A6C756ED323DB4DFE7B5E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C7F55B8D2F7B79980FDCCF26 /* AlcoveInspired */,
+			);
+			name = AlcoveInspired;
+			packageProductDependencies = (
+				A6D7596B626E0383B2ADCE5B /* IslandCore */,
+			);
+			productName = AlcoveInspired;
+			productReference = 4A6F3BCBC63D1BEAB85A181E /* AlcoveInspired.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C1F33C982ECEBA74FF5FAD81 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					428ADBFEAFBA5B2278F449AC = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 4863CAE4A091F5607BDC1804 /* Build configuration list for PBXProject "AlcoveInspired" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				ru,
+			);
+			mainGroup = 10F2AE09B0BA74F66FDD0A1F;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				55A562A48BA94436444E9DF1 /* XCLocalSwiftPackageReference "Packages/IslandCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = FF5B19808ED40EC29252EC38 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				428ADBFEAFBA5B2278F449AC /* AlcoveInspired */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		893A6C756ED323DB4DFE7B5E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		24B670788EAE6D8AA2BC6CE9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		985C21A129A6BAC94A17A05D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		04F126D5499D4BE1A2D148D6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		908148591071182B5F10FA86 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/AlcoveInspired.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Config/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.boboduk.AlcoveInspired;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		1E58CA0951D62BD070254288 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/AlcoveInspired.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Config/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.boboduk.AlcoveInspired;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4863CAE4A091F5607BDC1804 /* Build configuration list for PBXProject "AlcoveInspired" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				985C21A129A6BAC94A17A05D /* Debug */,
+				04F126D5499D4BE1A2D148D6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D8718B69A342AD15AE78A112 /* Build configuration list for PBXNativeTarget "AlcoveInspired" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				908148591071182B5F10FA86 /* Debug */,
+				1E58CA0951D62BD070254288 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		55A562A48BA94436444E9DF1 /* XCLocalSwiftPackageReference "Packages/IslandCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/IslandCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A6D7596B626E0383B2ADCE5B /* IslandCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = IslandCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = C1F33C982ECEBA74FF5FAD81 /* Project object */;
+}
