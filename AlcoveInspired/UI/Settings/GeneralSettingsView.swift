@@ -29,7 +29,7 @@ struct GeneralSettingsView: View {
                 Toggle("Show idle island on displays without a notch", isOn: $store.settings.general.fallbackIdleVisible)
             }
 
-            Section("Interaction") {
+            Section {
                 Picker("When the pointer hovers", selection: $store.settings.general.hoverBehavior) {
                     Text("Do nothing").tag(HoverBehavior.none)
                     Text("Highlight").tag(HoverBehavior.highlight)
@@ -47,12 +47,16 @@ struct GeneralSettingsView: View {
                 if general.swipeGestures {
                     Toggle("Haptic feedback on swipe", isOn: $store.settings.general.hapticFeedback)
                 }
+            } header: {
+                Text("Interaction")
             } footer: {
                 Text("Click the island to expand or collapse it. Swipe down on the island to expand, up to collapse, left or right to change tracks.")
             }
 
-            Section("Live activities") {
+            Section {
                 Toggle("Show live activities beside the notch", isOn: $store.settings.general.showLiveActivities)
+            } header: {
+                Text("Live activities")
             } footer: {
                 Text("Music and timers appear in the compact island while they run. HUDs and notifications temporarily take their place.")
             }
@@ -86,7 +90,7 @@ struct LaunchAtLoginRow: View {
             ))
             if let message = service.statusMessage {
                 HStack(spacing: 6) {
-                    Text(message)
+                    islandText(message)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     if service.needsApproval {

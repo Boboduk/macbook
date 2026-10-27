@@ -3,8 +3,8 @@ import Foundation
 /// Countdown timer described by dates, not by ticks: it keeps the correct
 /// time across app switches, display sleep and system sleep, and it needs no
 /// periodic work while nobody is looking at it.
-public struct CountdownTimer: Equatable, Codable {
-    public enum State: Equatable, Codable {
+public struct CountdownTimer: Equatable, Codable, Sendable {
+    public enum State: Equatable, Codable, Sendable {
         case idle
         case running(endDate: Date)
         case paused(remaining: TimeInterval)
@@ -107,8 +107,8 @@ public struct CountdownTimer: Equatable, Codable {
 }
 
 /// Stopwatch described by dates.
-public struct Stopwatch: Equatable, Codable {
-    public enum State: Equatable, Codable {
+public struct Stopwatch: Equatable, Codable, Sendable {
+    public enum State: Equatable, Codable, Sendable {
         case idle
         case running(since: Date, accumulated: TimeInterval)
         case paused(accumulated: TimeInterval)

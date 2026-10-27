@@ -60,7 +60,8 @@ jobs:
             CODE_SIGN_IDENTITY=- \
             build > build/xcodebuild-release.log 2>&1 || true
           grep -E "error:|\*\* BUILD" build/xcodebuild-release.log | sort -u | head -60 || true
-          test -d build/DerivedData/Build/Products/Release/AlcoveInspired.app
+          grep -q "\*\* BUILD SUCCEEDED \*\*" build/xcodebuild-release.log
+          test -x build/DerivedData/Build/Products/Release/AlcoveInspired.app/Contents/MacOS/AlcoveInspired
 
       - name: Tests through the Xcode scheme
         id: schemetests
@@ -97,7 +98,8 @@ jobs:
             -derivedDataPath build/DerivedDataDebug \
             CODE_SIGN_IDENTITY=- \
             build > build/xcodebuild-debug.log 2>&1 || true
-          test -d build/DerivedDataDebug/Build/Products/Debug/AlcoveInspired.app
+          grep -q "\*\* BUILD SUCCEEDED \*\*" build/xcodebuild-debug.log
+          test -x build/DerivedDataDebug/Build/Products/Debug/AlcoveInspired.app/Contents/MacOS/AlcoveInspired
 
       - name: Smoke test (launch, island states, screenshots)
         id: smoke
@@ -140,4 +142,5 @@ jobs:
           test "${{ steps.release.outcome }}" = success
           test "${{ steps.schemetests.outcome }}" = success
           test "${{ steps.spm.outcome }}" = success
+          test "${{ steps.debug.outcome }}" = success
           test "${{ steps.smoke.outcome }}" = success

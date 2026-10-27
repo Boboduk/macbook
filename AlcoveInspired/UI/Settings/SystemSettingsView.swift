@@ -18,7 +18,7 @@ struct SystemSettingsView: View {
             Section("Permissions") {
                 StatusRow(
                     title: "Accessibility (media keys)",
-                    value: model.permissions.isAccessibilityTrusted ? "Granted" : "Not granted",
+                    value: model.permissions.isAccessibilityTrusted ? Text("Granted") : Text("Not granted"),
                     isOK: model.permissions.isAccessibilityTrusted
                 )
                 ForEach(MusicSourceKind.allCases) { source in
@@ -27,7 +27,7 @@ struct SystemSettingsView: View {
                 NotificationPermissionRow()
                 StatusRow(
                     title: "Launch at login",
-                    value: model.launchAtLogin.statusDescription,
+                    value: islandText(model.launchAtLogin.statusDescription),
                     isOK: model.launchAtLogin.status == .enabled
                 )
                 HStack {

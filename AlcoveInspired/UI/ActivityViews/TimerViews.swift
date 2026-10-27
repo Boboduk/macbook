@@ -162,9 +162,15 @@ private struct CountdownPanel: View {
                     IslandChip(title: "+1 min") { timer.extendCountdown(by: 60) }
                     IslandChip(title: "+5 min") { timer.extendCountdown(by: 300) }
                     Spacer(minLength: 0)
-                    Text(countdown.isPaused ? "Paused" : "Ends \(endTimeText(countdown))")
-                        .font(.system(size: 10.5, weight: .medium))
-                        .foregroundStyle(IslandTheme.secondaryText(model.coordinator.appearance))
+                    Group {
+                        if countdown.isPaused {
+                            Text("Paused")
+                        } else {
+                            Text("Ends \(endTimeText(countdown))")
+                        }
+                    }
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundStyle(IslandTheme.secondaryText(model.coordinator.appearance))
                 } else {
                     ForEach(presets, id: \.self) { minutes in
                         IslandChip(title: "\(minutes)m", isSelected: Int(countdown.duration) == minutes * 60) {

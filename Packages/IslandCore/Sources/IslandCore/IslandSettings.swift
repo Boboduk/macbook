@@ -5,7 +5,7 @@ import Foundation
 import CoreGraphics
 #endif
 
-public enum DisplayTarget: String, Codable, CaseIterable, Identifiable {
+public enum DisplayTarget: String, Codable, CaseIterable, Identifiable, Sendable {
     /// Built-in display with a notch if present, otherwise the main display.
     case automatic
     /// Always the display with the menu bar / keyboard focus.
@@ -14,7 +14,7 @@ public enum DisplayTarget: String, Codable, CaseIterable, Identifiable {
     public var id: String { rawValue }
 }
 
-public enum IslandSizeOption: String, Codable, CaseIterable, Identifiable {
+public enum IslandSizeOption: String, Codable, CaseIterable, Identifiable, Sendable {
     case compact
     case standard
     case large
@@ -30,7 +30,7 @@ public enum IslandSizeOption: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-public enum AccentOption: String, Codable, CaseIterable, Identifiable {
+public enum AccentOption: String, Codable, CaseIterable, Identifiable, Sendable {
     case system
     case white
     case artwork
@@ -44,7 +44,7 @@ public enum AccentOption: String, Codable, CaseIterable, Identifiable {
     public var id: String { rawValue }
 }
 
-public enum ThemeOption: String, Codable, CaseIterable, Identifiable {
+public enum ThemeOption: String, Codable, CaseIterable, Identifiable, Sendable {
     case system
     case light
     case dark
@@ -52,7 +52,7 @@ public enum ThemeOption: String, Codable, CaseIterable, Identifiable {
     public var id: String { rawValue }
 }
 
-public enum HUDStyle: String, Codable, CaseIterable, Identifiable {
+public enum HUDStyle: String, Codable, CaseIterable, Identifiable, Sendable {
     /// Icon and level beside the notch, island keeps the notch height.
     case compact
     /// The island drops below the notch with a larger bar.
@@ -61,7 +61,7 @@ public enum HUDStyle: String, Codable, CaseIterable, Identifiable {
     public var id: String { rawValue }
 }
 
-public enum MusicSourcePreference: String, Codable, CaseIterable, Identifiable {
+public enum MusicSourcePreference: String, Codable, CaseIterable, Identifiable, Sendable {
     case automatic
     case appleMusic
     case spotify
@@ -71,8 +71,8 @@ public enum MusicSourcePreference: String, Codable, CaseIterable, Identifiable {
 
 /// All user settings. Stored as one JSON document (see `SettingsPersistence`);
 /// every field has a default so older or partial documents still load.
-public struct IslandSettings: Codable, Equatable {
-    public struct General: Codable, Equatable {
+public struct IslandSettings: Codable, Equatable, Sendable {
+    public struct General: Codable, Equatable, Sendable {
         public var isEnabled = true
         public var displayTarget: DisplayTarget = .automatic
         public var hoverBehavior: HoverBehavior = .expand
@@ -89,7 +89,7 @@ public struct IslandSettings: Codable, Equatable {
         public init() {}
     }
 
-    public struct Appearance: Codable, Equatable {
+    public struct Appearance: Codable, Equatable, Sendable {
         public var size: IslandSizeOption = .standard
         public var cornerRadius: Double = 24
         /// Multiplier: >1 is faster, <1 is slower.
@@ -101,7 +101,7 @@ public struct IslandSettings: Codable, Equatable {
         public init() {}
     }
 
-    public struct Music: Codable, Equatable {
+    public struct Music: Codable, Equatable, Sendable {
         public var isEnabled = true
         public var preferredSource: MusicSourcePreference = .automatic
         public var showCompact = true
@@ -114,27 +114,27 @@ public struct IslandSettings: Codable, Equatable {
         public init() {}
     }
 
-    public struct LevelHUD: Codable, Equatable {
+    public struct LevelHUD: Codable, Equatable, Sendable {
         public var isEnabled = true
         public var duration: Double = 1.6
         public var style: HUDStyle = .compact
         public init() {}
     }
 
-    public struct Volume: Codable, Equatable {
+    public struct Volume: Codable, Equatable, Sendable {
         public var hud = LevelHUD()
         public var showOutputDeviceChanges = true
         public init() {}
     }
 
-    public struct MediaKeys: Codable, Equatable {
+    public struct MediaKeys: Codable, Equatable, Sendable {
         /// Intercept volume/brightness keys (requires Accessibility access)
         /// so that only the island HUD appears.
         public var replaceSystemHUD = false
         public init() {}
     }
 
-    public struct Timer: Codable, Equatable {
+    public struct Timer: Codable, Equatable, Sendable {
         public var isEnabled = true
         public var defaultDuration: Double = 300
         public var playSound = true
@@ -143,13 +143,13 @@ public struct IslandSettings: Codable, Equatable {
         public init() {}
     }
 
-    public struct Notifications: Codable, Equatable {
+    public struct Notifications: Codable, Equatable, Sendable {
         public var isEnabled = true
         public var duration: Double = 4
         public init() {}
     }
 
-    public struct Power: Codable, Equatable {
+    public struct Power: Codable, Equatable, Sendable {
         public var isEnabled = true
         public var showChargingChanges = true
         public var lowBatteryThreshold: Int = 20

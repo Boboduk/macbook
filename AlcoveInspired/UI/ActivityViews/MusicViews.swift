@@ -71,16 +71,22 @@ private struct NowPlayingView: View {
         HStack(alignment: .center, spacing: 14) {
             ArtworkView(size: 78, cornerRadius: 13)
                 .onTapGesture { music.openPlayer() }
-                .help("Open \(snapshot.source.displayName)")
+                .help(Text("Open \(snapshot.source.displayName)"))
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .top, spacing: 8) {
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(track.title.isEmpty ? "Unknown title" : track.title)
-                            .font(.system(size: 14, weight: .semibold))
+                        Group {
+                            if track.title.isEmpty {
+                                Text("Unknown title")
+                            } else {
+                                Text(verbatim: track.title)
+                            }
+                        }
+                        .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.white)
                             .lineLimit(1)
-                        Text(subtitle)
+                        Text(verbatim: subtitle)
                             .font(.system(size: 11.5))
                             .foregroundStyle(IslandTheme.secondaryText(appearance))
                             .lineLimit(1)
@@ -159,7 +165,7 @@ private struct ProgressRow: View {
         let progress = duration.map { $0 > 0 ? elapsed / $0 : 0 } ?? 0
 
         return HStack(spacing: 8) {
-            Text(TimeFormatting.clock(elapsed))
+            Text(verbatim: TimeFormatting.clock(elapsed))
                 .frame(width: 38, alignment: .leading)
             ScrubBar(
                 progress: progress,
@@ -171,8 +177,14 @@ private struct ProgressRow: View {
                 }
             )
             .frame(height: 12)
-            Text(duration.map { "-" + TimeFormatting.clock(max(0, $0 - elapsed), roundingUp: true) } ?? "Live")
-                .frame(width: 42, alignment: .trailing)
+            Group {
+                if let duration {
+                    Text(verbatim: "-" + TimeFormatting.clock(max(0, duration - elapsed), roundingUp: true))
+                } else {
+                    Text("Live")
+                }
+            }
+            .frame(width: 42, alignment: .trailing)
         }
         .font(.system(size: 10.5, weight: .medium, design: .rounded))
         .monospacedDigit()
@@ -200,7 +212,7 @@ private struct PermissionHint: View {
         }
     }
 
-    private func hint(text: String, button: String, action: @escaping () -> Void) -> some View {
+    private func hint(text: LocalizedStringKey, button: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "lock.fill")
                 .font(.system(size: 9, weight: .bold))

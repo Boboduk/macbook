@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PowerState: Equatable {
+public struct PowerState: Equatable, Sendable {
     public var hasBattery: Bool
     /// 0...100
     public var percent: Int
@@ -17,7 +17,7 @@ public struct PowerState: Equatable {
     public static let noBattery = PowerState(hasBattery: false, percent: 100, isCharging: false, isPluggedIn: true)
 }
 
-public enum PowerChange: Equatable {
+public enum PowerChange: Equatable, Sendable {
     case pluggedIn
     case unplugged
     case lowBattery

@@ -1,7 +1,7 @@
 import Foundation
 
 /// An internal notification shown as a banner.
-public struct Notice: Equatable {
+public struct Notice: Equatable, Sendable {
     public var id: String
     /// SF Symbol name.
     public var symbol: String
@@ -31,13 +31,13 @@ public struct Notice: Equatable {
     }
 }
 
-public enum TimerActivityMode: String, Equatable {
+public enum TimerActivityMode: String, Equatable, Sendable {
     case countdown
     case stopwatch
 }
 
 /// Raw events produced by the feature modules.
-public enum IslandEvent: Equatable {
+public enum IslandEvent: Equatable, Sendable {
     case volumeChanged(level: Double, muted: Bool, device: String?)
     case brightnessChanged(level: Double)
     case outputDeviceChanged(name: String, isHeadphones: Bool)

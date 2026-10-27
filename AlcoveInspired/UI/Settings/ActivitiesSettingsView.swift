@@ -22,7 +22,7 @@ struct ActivitiesSettingsView: View {
                     Toggle("Show track changes", isOn: $store.settings.music.peekOnTrackChange)
                     Toggle("Playback indicator", isOn: $store.settings.music.showPlaybackIndicator)
                     SliderRow(title: "Keep paused player for", value: $store.settings.music.pausedTimeout, range: 0...300, step: 5) { value in
-                        value == 0 ? "Hide" : TimeFormatting.shortDuration(value)
+                        value == 0 ? String(localized: "Hide") : SettingsFormat.duration(value)
                     }
                     Toggle("Load Spotify artwork from the internet", isOn: $store.settings.music.loadRemoteArtwork)
                     ForEach(MusicSourceKind.allCases) { source in
@@ -42,7 +42,11 @@ struct ActivitiesSettingsView: View {
                     HUDStylePicker(selection: $store.settings.volume.hud.style)
                     SliderRow(title: "Display time", value: $store.settings.volume.hud.duration, range: 0.8...6, step: 0.1, format: SettingsFormat.seconds)
                     Toggle("Show output device changes", isOn: $store.settings.volume.showOutputDeviceChanges)
-                    StatusRow(title: "Output", value: model.volume.deviceName ?? "No output device", isOK: model.volume.isAvailable)
+                    StatusRow(
+                        title: "Output",
+                        value: model.volume.deviceName.map { Text(verbatim: $0) } ?? Text("No output device"),
+                        isOK: model.volume.isAvailable
+                    )
                 }
                 Toggle("Brightness HUD", isOn: $store.settings.brightness.isEnabled)
                 if settings.brightness.isEnabled {
@@ -50,7 +54,7 @@ struct ActivitiesSettingsView: View {
                     SliderRow(title: "Display time", value: $store.settings.brightness.duration, range: 0.8...6, step: 0.1, format: SettingsFormat.seconds)
                     StatusRow(
                         title: "Built-in display",
-                        value: model.brightness.isAvailable ? "Available" : "Not available on this Mac or display",
+                        value: model.brightness.isAvailable ? Text("Available") : Text("Not available on this Mac or display"),
                         isOK: model.brightness.isAvailable
                     )
                 }
@@ -78,7 +82,7 @@ struct ActivitiesSettingsView: View {
                         get: { store.settings.timer.defaultDuration / 60 },
                         set: { store.settings.timer.defaultDuration = $0 * 60 }
                     ), in: 1...180, step: 1) {
-                        LabeledContent("Default duration", value: TimeFormatting.shortDuration(settings.timer.defaultDuration))
+                        LabeledContent("Default duration", value: SettingsFormat.duration(settings.timer.defaultDuration))
                     }
                     Toggle("Show beside the notch while running", isOn: $store.settings.timer.showCompact)
                     Toggle("Play sound when finished", isOn: $store.settings.timer.playSound)
@@ -113,7 +117,7 @@ struct ActivitiesSettingsView: View {
                     }
                     StatusRow(
                         title: "Battery",
-                        value: model.power.hasBattery ? "\(model.power.state.percent)%\(model.power.state.isPluggedIn ? ", on power adapter" : "")" : "No battery",
+                        value: batteryText,
                         isOK: model.power.hasBattery
                     )
                 }
@@ -121,6 +125,16 @@ struct ActivitiesSettingsView: View {
                 Text("Battery")
             }
         }
+    }
+}
+
+extension ActivitiesSettingsView {
+    private var batteryText: Text {
+        let state = model.power.state
+        guard state.hasBattery else { return Text("No battery") }
+        return state.isPluggedIn
+            ? Text("\(state.percent)%, on power adapter")
+            : Text(verbatim: "\(state.percent)%")
     }
 }
 
@@ -136,19 +150,21 @@ private struct HUDStylePicker: View {
 }
 
 struct StatusRow: View {
-    let title: String
-    let value: String
+    let title: LocalizedStringKey
+    let value: Text
     let isOK: Bool
 
     var body: some View {
-        LabeledContent(title) {
+        LabeledContent {
             HStack(spacing: 6) {
                 Circle()
                     .fill(isOK ? Color.green : Color.orange)
                     .frame(width: 7, height: 7)
-                Text(value)
+                value
                     .foregroundStyle(.secondary)
             }
+        } label: {
+            Text(title)
         }
     }
 }
@@ -165,7 +181,7 @@ struct AutomationRow: View {
                 Circle()
                     .fill(color(for: status))
                     .frame(width: 7, height: 7)
-                Text(status.title)
+                islandText(status.title)
                     .foregroundStyle(.secondary)
                 switch status {
                 case .notDetermined:
@@ -197,7 +213,7 @@ struct NotificationPermissionRow: View {
         let status = model.permissions.notifications
         LabeledContent("Notification permission") {
             HStack(spacing: 8) {
-                Text(status.title)
+                islandText(status.title)
                     .foregroundStyle(.secondary)
                 switch status {
                 case .notDetermined:
@@ -224,7 +240,7 @@ struct MediaKeysStatusRow: View {
                 Circle()
                     .fill(trusted ? Color.green : Color.orange)
                     .frame(width: 7, height: 7)
-                Text(statusText(trusted: trusted))
+                statusText(trusted: trusted)
                     .foregroundStyle(.secondary)
                 if !trusted {
                     Button("Grant…") { model.requestAccessibility() }
@@ -234,13 +250,13 @@ struct MediaKeysStatusRow: View {
         }
     }
 
-    private func statusText(trusted: Bool) -> String {
-        guard trusted else { return "Not granted" }
+    private func statusText(trusted: Bool) -> Text {
+        guard trusted else { return Text("Not granted") }
         switch model.mediaKeyState {
-        case .off: return "Granted (keys not used)"
-        case .needsPermission: return "Granted, key monitor unavailable"
-        case .observing: return "Granted, observing brightness keys"
-        case .replacing: return "Granted, replacing system HUD"
+        case .off: return Text("Granted (keys not used)")
+        case .needsPermission: return Text("Granted, key monitor unavailable")
+        case .observing: return Text("Granted, observing brightness keys")
+        case .replacing: return Text("Granted, replacing system HUD")
         }
     }
 }

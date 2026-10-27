@@ -204,7 +204,7 @@ final class MusicController {
                 self.lastErrorMessage = nil
                 self.queryState(of: source)
             } else if status == .denied {
-                self.lastErrorMessage = "Access to \(source.displayName) was denied."
+                self.lastErrorMessage = String(localized: "Access to \(source.displayName) was denied.")
             }
         }
     }
@@ -346,12 +346,12 @@ final class MusicController {
         case let .failure(failure):
             if failure.isPermissionDenied {
                 permissions.refreshAutomation(for: source)
-                lastErrorMessage = "AlcoveInspired is not allowed to control \(source.displayName)."
+                lastErrorMessage = String(localized: "AlcoveInspired is not allowed to control \(source.displayName).")
                 onNotice?(Notice(
                     id: "music.permission",
                     symbol: "lock.fill",
-                    title: "Allow control of \(source.displayName)",
-                    body: "System Settings › Privacy & Security › Automation",
+                    title: String(localized: "Allow control of \(source.displayName)"),
+                    body: String(localized: "System Settings › Privacy & Security › Automation"),
                     priority: .high
                 ))
             } else if !failure.isAppNotRunning {

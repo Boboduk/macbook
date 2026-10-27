@@ -50,7 +50,7 @@ struct IslandIconButton: View {
     var size: CGFloat = 15
     var isProminent = false
     var tint: Color = .white
-    var label: String
+    var label: LocalizedStringKey
     let action: () -> Void
 
     @State private var isHovering = false
@@ -70,7 +70,7 @@ struct IslandIconButton: View {
         .buttonStyle(IslandPressStyle())
         .onHover { isHovering = $0 }
         .animation(.smooth(duration: 0.15), value: isHovering)
-        .help(label)
+        .help(Text(label))
         .accessibilityLabel(Text(label))
     }
 }
@@ -87,7 +87,7 @@ struct IslandPressStyle: ButtonStyle {
 /// Dark capsule segmented control that fits the island.
 struct IslandSegmentedControl<Value: Hashable>: View {
     let options: [Value]
-    let title: (Value) -> String
+    let title: (Value) -> LocalizedStringKey
     @Binding var selection: Value
     @Namespace private var namespace
 
@@ -122,7 +122,7 @@ struct IslandSegmentedControl<Value: Hashable>: View {
 
 /// Small capsule chip (timer presets, +/- minute).
 struct IslandChip: View {
-    let title: String
+    let title: LocalizedStringKey
     var isSelected = false
     let action: () -> Void
 

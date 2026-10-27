@@ -6,7 +6,7 @@ import CoreGraphics
 #endif
 
 /// Geometry of the camera housing on the display the island lives on.
-public struct NotchMetrics: Equatable {
+public struct NotchMetrics: Equatable, Sendable {
     /// Size of the physical notch, or of the synthetic one on displays without a notch.
     public var notchSize: CGSize
     public var hasNotch: Bool
@@ -37,7 +37,7 @@ public struct NotchMetrics: Equatable {
     )
 }
 
-public struct IslandLayoutConfig: Equatable {
+public struct IslandLayoutConfig: Equatable, Sendable {
     /// Overall size multiplier (settings: compact / standard / large).
     public var scale: CGFloat
     /// Bottom corner radius of the expanded island.
@@ -53,7 +53,7 @@ public struct IslandLayoutConfig: Equatable {
 }
 
 /// Resolved geometry of the island shape for one presentation.
-public struct IslandFrame: Equatable {
+public struct IslandFrame: Equatable, Sendable {
     public var size: CGSize
     /// Radius of the concave "ears" that join the island to the top screen edge.
     public var topRadius: CGFloat

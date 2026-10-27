@@ -97,4 +97,11 @@ enum SettingsFormat {
     static func points(_ value: Double) -> String {
         "\(Int(value.rounded())) pt"
     }
+
+    /// Localized short duration ("5 min", "1 h 30 min").
+    static func duration(_ seconds: Double) -> String {
+        Duration.seconds(seconds.rounded()).formatted(
+            .units(allowed: [.hours, .minutes, .seconds], width: .abbreviated)
+        )
+    }
 }

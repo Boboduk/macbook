@@ -266,13 +266,13 @@ final class AppModel {
         let menu = NSMenu()
         let general = settings.settings.general
 
-        menu.addItem(MenuAction.item(coordinator.controller.isExpanded ? "Collapse Island" : "Expand Island") { [weak self] in
+        menu.addItem(MenuAction.item(coordinator.controller.isExpanded ? String(localized: "Collapse Island") : String(localized: "Expand Island")) { [weak self] in
             self?.coordinator.toggleExpanded()
         })
-        let pin = MenuAction.item("Keep Expanded") { [weak self] in self?.togglePinned() }
+        let pin = MenuAction.item(String(localized: "Keep Expanded")) { [weak self] in self?.togglePinned() }
         pin.state = general.isPinned ? .on : .off
         menu.addItem(pin)
-        let enabled = MenuAction.item("Show Island") { [weak self] in self?.toggleEnabled() }
+        let enabled = MenuAction.item(String(localized: "Show Island")) { [weak self] in self?.toggleEnabled() }
         enabled.state = general.isEnabled ? .on : .off
         menu.addItem(enabled)
 
@@ -280,24 +280,24 @@ final class AppModel {
             menu.addItem(.separator())
             let timerMenu = NSMenu()
             for minutes in [1, 5, 10, 25, 60] {
-                timerMenu.addItem(MenuAction.item("\(minutes) min") { [weak self] in
+                timerMenu.addItem(MenuAction.item(SettingsFormat.duration(Double(minutes * 60))) { [weak self] in
                     self?.timer.startCountdown(duration: TimeInterval(minutes * 60))
                     self?.coordinator.expand(tab: .timer)
                 })
             }
             if timer.countdown.isActive {
                 timerMenu.addItem(.separator())
-                timerMenu.addItem(MenuAction.item("Cancel Timer") { [weak self] in self?.timer.resetCountdown() })
+                timerMenu.addItem(MenuAction.item(String(localized: "Cancel Timer")) { [weak self] in self?.timer.resetCountdown() })
             }
-            let timerItem = NSMenuItem(title: "Start Timer", action: nil, keyEquivalent: "")
+            let timerItem = NSMenuItem(title: String(localized: "Start Timer"), action: nil, keyEquivalent: "")
             timerItem.submenu = timerMenu
             menu.addItem(timerItem)
         }
 
         menu.addItem(.separator())
-        menu.addItem(MenuAction.item("Settings…", key: ",") { [weak self] in self?.showSettings() })
+        menu.addItem(MenuAction.item(String(localized: "Settings…"), key: ",") { [weak self] in self?.showSettings() })
         menu.addItem(.separator())
-        menu.addItem(MenuAction.item("Quit AlcoveInspired", key: "q") {
+        menu.addItem(MenuAction.item(String(localized: "Quit AlcoveInspired"), key: "q") {
             NSApp.terminate(nil)
         })
         return menu
@@ -313,13 +313,13 @@ final class MenuAction: NSObject {
         self.handler = handler
     }
 
-    @objc private func perform() {
+    @objc private func runHandler() {
         handler()
     }
 
     static func item(_ title: String, key: String = "", handler: @escaping () -> Void) -> NSMenuItem {
         let action = MenuAction(handler: handler)
-        let item = NSMenuItem(title: title, action: #selector(MenuAction.perform), keyEquivalent: key)
+        let item = NSMenuItem(title: title, action: #selector(MenuAction.runHandler), keyEquivalent: key)
         item.target = action
         // NSMenuItem.target is weak; the represented object keeps the action alive.
         item.representedObject = action

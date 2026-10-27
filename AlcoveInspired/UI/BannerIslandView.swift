@@ -56,15 +56,15 @@ struct BannerIslandView: View {
     private func content(appearance: IslandSettings.Appearance) -> some View {
         switch activity.payload {
         case let .track(track):
-            BannerTitle(text: track.title.isEmpty ? track.source.displayName : track.title)
-            BannerSubtitle(text: track.artist.isEmpty ? track.album : track.artist, appearance: appearance)
+            BannerTitle(text: Text(verbatim: track.title.isEmpty ? track.source.displayName : track.title))
+            BannerSubtitle(text: Text(verbatim: track.artist.isEmpty ? track.album : track.artist), appearance: appearance)
         case let .message(message):
-            BannerTitle(text: message.title)
+            BannerTitle(text: islandText(message.title))
             if !message.body.isEmpty {
-                BannerSubtitle(text: message.body, appearance: appearance)
+                BannerSubtitle(text: islandText(message.body), appearance: appearance)
             }
         case let .level(level):
-            BannerTitle(text: activity.kind == .brightness ? "Brightness" : (level.detail ?? "Volume"))
+            BannerTitle(text: levelTitle(level))
             LevelBar(
                 value: level.isMuted ? 0 : level.value,
                 tint: IslandTheme.accent(appearance),
@@ -76,20 +76,37 @@ struct BannerIslandView: View {
             )
             .frame(height: 16)
         case let .power(state):
-            BannerTitle(text: activity.title.isEmpty ? (state.isPluggedIn ? "Charging" : "On Battery") : activity.title)
-            BannerSubtitle(text: activity.subtitle.isEmpty ? "\(state.percent)%" : activity.subtitle, appearance: appearance)
+            if activity.id == .powerLow {
+                BannerTitle(text: Text("Low Battery"))
+                BannerSubtitle(text: Text("\(state.percent)% remaining"), appearance: appearance)
+            } else {
+                BannerTitle(text: state.isPluggedIn ? Text("Charging") : Text("On Battery"))
+                BannerSubtitle(text: Text(verbatim: "\(state.percent)%"), appearance: appearance)
+            }
         case .none:
-            BannerTitle(text: activity.title)
-            BannerSubtitle(text: activity.subtitle, appearance: appearance)
+            BannerTitle(text: islandText(activity.title))
+            BannerSubtitle(text: islandText(activity.subtitle), appearance: appearance)
         }
+    }
+
+    private func levelTitle(_ level: LevelPayload) -> Text {
+        if activity.kind == .brightness { return Text("Brightness") }
+        if let detail = level.detail { return Text(verbatim: detail) }
+        return Text("Volume")
     }
 
     @ViewBuilder
     private func trailingAccessory(appearance: IslandSettings.Appearance) -> some View {
         switch activity.payload {
         case let .level(level):
-            Text(level.isMuted ? "Muted" : "\(Int((level.value * 100).rounded()))%")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
+            Group {
+                if level.isMuted {
+                    Text("Muted")
+                } else {
+                    Text(verbatim: "\(Int((level.value * 100).rounded()))%")
+                }
+            }
+            .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(IslandTheme.secondaryText(appearance))
                 .contentTransition(.numericText(value: level.value))
@@ -119,10 +136,10 @@ struct BannerSymbol: View {
 }
 
 struct BannerTitle: View {
-    let text: String
+    let text: Text
 
     var body: some View {
-        Text(text)
+        text
             .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(IslandTheme.primaryText)
             .lineLimit(1)
@@ -131,11 +148,11 @@ struct BannerTitle: View {
 }
 
 struct BannerSubtitle: View {
-    let text: String
+    let text: Text
     let appearance: IslandSettings.Appearance
 
     var body: some View {
-        Text(text)
+        text
             .font(.system(size: 12))
             .foregroundStyle(IslandTheme.secondaryText(appearance))
             .lineLimit(2)

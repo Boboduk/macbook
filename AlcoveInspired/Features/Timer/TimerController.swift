@@ -209,7 +209,8 @@ final class TimerController {
         persist()
         publish()
         onFinish?(duration)
-        onEvent?(.timerFinished(title: "Timer", body: "\(TimeFormatting.shortDuration(duration)) is up"))
+        let length = Duration.seconds(duration).formatted(.units(allowed: [.hours, .minutes, .seconds], width: .abbreviated))
+        onEvent?(.timerFinished(title: String(localized: "Timer"), body: String(localized: "\(length) is up")))
     }
 
     private func setAppNapDisabled(_ disabled: Bool) {

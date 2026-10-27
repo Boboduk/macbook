@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let model = AppModel()
         self.model = model
+        MainMenu.install { [weak model] in model?.showSettings() }
         model.start()
     }
 

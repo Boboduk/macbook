@@ -2,7 +2,7 @@ import Foundation
 
 /// Special keys delivered as `NX_SYSDEFINED` events with subtype 8
 /// (`NX_SUBTYPE_AUX_CONTROL_BUTTONS`). Codes from IOKit `ev_keymap.h`.
-public enum MediaKey: Int, Equatable {
+public enum MediaKey: Int, Equatable, Sendable {
     case soundUp = 0
     case soundDown = 1
     case brightnessUp = 2
@@ -20,7 +20,7 @@ public enum MediaKey: Int, Equatable {
     public var isBrightnessKey: Bool { self == .brightnessUp || self == .brightnessDown }
 }
 
-public struct MediaKeyEvent: Equatable {
+public struct MediaKeyEvent: Equatable, Sendable {
     public static let auxControlButtonsSubtype = 8
 
     public var key: MediaKey

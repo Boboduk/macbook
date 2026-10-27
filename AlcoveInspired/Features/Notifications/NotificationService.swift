@@ -61,8 +61,8 @@ final class NotificationService {
 
         let schedule = {
             let content = UNMutableNotificationContent()
-            content.title = "Timer"
-            content.body = "Time is up."
+            content.title = String(localized: "Timer")
+            content.body = String(localized: "Time is up.")
             content.sound = .default
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, endDate.timeIntervalSinceNow), repeats: false)
             let request = UNNotificationRequest(identifier: Self.timerRequestID, content: content, trigger: trigger)

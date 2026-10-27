@@ -71,10 +71,9 @@ final class PermissionService {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                // The trust value is updated shortly after the notification.
-                Task { @MainActor [weak self] in
-                    try? await Task.sleep(for: .milliseconds(300))
+            // The trust value is updated shortly after the notification.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                MainActor.assumeIsolated {
                     self?.refreshAccessibility()
                 }
             }

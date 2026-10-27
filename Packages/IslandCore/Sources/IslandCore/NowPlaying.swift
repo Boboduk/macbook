@@ -1,7 +1,7 @@
 import Foundation
 
 /// Players with a documented scripting interface and public change notifications.
-public enum MusicSourceKind: String, Codable, CaseIterable, Identifiable {
+public enum MusicSourceKind: String, Codable, CaseIterable, Identifiable, Sendable {
     case appleMusic
     case spotify
 
@@ -30,7 +30,7 @@ public enum MusicSourceKind: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-public enum PlaybackState: String, Codable, Equatable {
+public enum PlaybackState: String, Codable, Equatable, Sendable {
     case playing
     case paused
     case stopped
@@ -44,7 +44,7 @@ public enum PlaybackState: String, Codable, Equatable {
     }
 }
 
-public struct TrackInfo: Equatable {
+public struct TrackInfo: Equatable, Sendable {
     /// Stable identifier (persistent id / Spotify URI), or a synthetic one.
     public var id: String
     public var title: String
@@ -64,7 +64,7 @@ public struct TrackInfo: Equatable {
 
 /// Playback position anchored at a point in time. The UI derives the current
 /// position from it instead of asking the player every second.
-public struct PlaybackPosition: Equatable {
+public struct PlaybackPosition: Equatable, Sendable {
     public var elapsed: TimeInterval
     public var timestamp: Date
     /// 1 while playing, 0 while paused.
@@ -83,7 +83,7 @@ public struct PlaybackPosition: Equatable {
     }
 }
 
-public struct NowPlayingSnapshot: Equatable {
+public struct NowPlayingSnapshot: Equatable, Sendable {
     public var source: MusicSourceKind
     public var track: TrackInfo?
     public var state: PlaybackState

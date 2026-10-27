@@ -103,15 +103,15 @@ private struct TabButton: View {
                 )
         }
         .buttonStyle(.plain)
-        .help(tab == .music ? "Music" : "Timer")
-        .accessibilityLabel(Text(tab == .music ? "Music" : "Timer"))
+        .help(Text(tab.titleKey))
+        .accessibilityLabel(Text(tab.titleKey))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
 private struct HeaderButton: View {
     let symbol: String
-    let label: String
+    let label: LocalizedStringKey
     let isActive: Bool
     let action: () -> Void
 
@@ -125,9 +125,24 @@ private struct HeaderButton: View {
                 .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(.plain)
-        .help(label)
+        .help(Text(label))
         .accessibilityLabel(Text(label))
     }
+}
+
+extension IslandTab {
+    var titleKey: LocalizedStringKey {
+        switch self {
+        case .music: return "Music"
+        case .timer: return "Timer"
+        }
+    }
+}
+
+/// Text for system-generated strings that may have a translation; strings
+/// with a percent sign are shown verbatim (they are never format keys here).
+func islandText(_ string: String) -> Text {
+    string.contains("%") ? Text(verbatim: string) : Text(LocalizedStringKey(string))
 }
 
 /// HUD or message shown on top of the expanded island.
@@ -150,7 +165,7 @@ struct TransientOverlayView: View {
             case let .message(message):
                 Image(systemName: message.symbol)
                     .font(.system(size: 12, weight: .semibold))
-                Text(message.title)
+                islandText(message.title)
                     .font(.system(size: 12, weight: .semibold))
                     .lineLimit(1)
             case let .track(track):
@@ -166,7 +181,7 @@ struct TransientOverlayView: View {
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .monospacedDigit()
             case .none:
-                Text(activity.title)
+                islandText(activity.title)
                     .font(.system(size: 12, weight: .semibold))
             }
         }
@@ -183,9 +198,9 @@ struct TransientOverlayView: View {
 /// or broken view, always an explanation and, when possible, an action.
 struct EmptyStateView: View {
     let symbol: String
-    let title: String
-    let message: String
-    var actionTitle: String?
+    let title: LocalizedStringKey
+    let message: LocalizedStringKey
+    var actionTitle: LocalizedStringKey?
     var action: (() -> Void)?
     @Environment(AppModel.self) private var model
 

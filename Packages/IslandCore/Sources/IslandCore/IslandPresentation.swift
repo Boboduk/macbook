@@ -1,14 +1,14 @@
 import Foundation
 
 /// Pages of the expanded island.
-public enum IslandTab: String, Codable, CaseIterable, Identifiable {
+public enum IslandTab: String, Codable, CaseIterable, Identifiable, Sendable {
     case music
     case timer
 
     public var id: String { rawValue }
 }
 
-public struct ExpandedContext: Equatable {
+public struct ExpandedContext: Equatable, Sendable {
     /// Selected page; `nil` when no page-providing module is enabled.
     public var tab: IslandTab?
     public var availableTabs: [IslandTab]
@@ -25,7 +25,7 @@ public struct ExpandedContext: Equatable {
 }
 
 /// Everything the UI needs to draw the island. Produced by `IslandController`.
-public enum IslandPresentation: Equatable {
+public enum IslandPresentation: Equatable, Sendable {
     /// Suppressed (disabled, or hidden in a full-screen app).
     case hidden
     /// State A/B: plain black shape matching the notch.
@@ -86,7 +86,7 @@ public enum IslandPresentation: Equatable {
 }
 
 /// Geometry class of a presentation (what `IslandLayout` needs to size it).
-public enum IslandShapeKind: Hashable {
+public enum IslandShapeKind: Hashable, Sendable {
     case hidden
     case idle(hovered: Bool)
     case compact(WingSize, hovered: Bool)
@@ -94,7 +94,7 @@ public enum IslandShapeKind: Hashable {
     case expanded
 }
 
-public enum HoverBehavior: String, Codable, CaseIterable {
+public enum HoverBehavior: String, Codable, CaseIterable, Sendable {
     /// No reaction to hover.
     case none
     /// Slight enlargement only.
@@ -103,12 +103,12 @@ public enum HoverBehavior: String, Codable, CaseIterable {
     case expand
 }
 
-public enum SwipeDirection: Equatable {
+public enum SwipeDirection: Equatable, Sendable {
     case up, down, left, right
 }
 
 /// What the app should do after a swipe was handled by `IslandController`.
-public enum SwipeOutcome: Equatable {
+public enum SwipeOutcome: Equatable, Sendable {
     case none
     case expanded
     case collapsed
