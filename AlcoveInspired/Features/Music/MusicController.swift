@@ -3,15 +3,22 @@ import IslandCore
 import Observation
 import SwiftUI
 
-/// Now-playing state for Apple Music and Spotify.
+/// Now-playing state for the whole system.
 ///
-/// macOS has no public API for "whatever is playing": the private MediaRemote
-/// framework is closed to third-party apps since macOS 15.4. Both supported
-/// players instead post a public distributed notification on every change
-/// (title, artist, album, state — no permission needed) and expose a scripting
-/// dictionary for artwork, position and commands (requires the user's
-/// Automation consent, asked only when the user first uses a control or taps
-/// "Allow").
+/// Two back ends feed the same snapshot:
+///
+/// * **System** (`useSystemNowPlaying`, the default): the `MediaRemoteBridge`
+///   reports whatever is playing anywhere — Music, Spotify, Safari, Chrome,
+///   VLC, podcasts — with artwork, position and transport controls, and needs
+///   no per-app permission. This is the iPhone-style "Now Playing".
+/// * **Scriptable** (fallback): Apple Music and Spotify each post a public
+///   change notification and expose a scripting dictionary. Used when the
+///   system helper is turned off or cannot run (MediaRemote unavailable).
+///   Artwork, position and controls then require the user's Automation
+///   consent for that player.
+///
+/// The controller starts in the system back end, and falls back to the
+/// scriptable one automatically if the helper reports that it cannot work.
 @MainActor
 @Observable
 final class MusicController {
@@ -27,20 +34,36 @@ final class MusicController {
     var isPlaying: Bool { snapshot?.isPlaying ?? false }
     var source: MusicSourceKind? { snapshot?.source }
     var isEnabled: Bool { settings.isEnabled }
+    /// True while the system-wide MediaRemote back end is driving the UI.
+    var usesSystemSource: Bool { backend == .system }
 
-    /// Automation status for the active player (or `nil` without a player).
+    /// Automation status for the active scriptable player (`nil` for the
+    /// system back end, which needs no Automation consent).
     var automationStatus: AutomationStatus? {
-        guard let source else { return nil }
+        guard let source, source != .system else { return nil }
         return permissions.automation[source]
     }
 
-    var canControl: Bool { automationStatus != .denied && snapshot != nil }
+    /// Whether play/pause/next/previous can be used right now.
+    var canControl: Bool {
+        guard snapshot != nil else { return false }
+        if backend == .system { return true }
+        return automationStatus != .denied
+    }
+
+    /// Whether the scrub bar can seek (needs a known duration).
+    var canSeek: Bool {
+        guard let snapshot, snapshot.track?.duration != nil else { return false }
+        if backend == .system { return true }
+        return automationStatus == .granted
+    }
 
     @ObservationIgnored var onEvent: ((IslandEvent) -> Void)?
     @ObservationIgnored var onNotice: ((Notice) -> Void)?
 
     @ObservationIgnored private let permissions: PermissionService
     @ObservationIgnored private let runner = AppleScriptRunner.shared
+    @ObservationIgnored private let bridge = MediaRemoteBridge()
     @ObservationIgnored private var settings: IslandSettings.Music
     @ObservationIgnored private var snapshots: [MusicSourceKind: NowPlayingSnapshot] = [:]
     @ObservationIgnored private var updatedAt: [MusicSourceKind: Date] = [:]
@@ -49,6 +72,12 @@ final class MusicController {
     @ObservationIgnored private var artworkRequestKey: String?
     @ObservationIgnored private var artworkTask: Task<Void, Never>?
     @ObservationIgnored private var isStarted = false
+    @ObservationIgnored private var systemTimeout: DispatchWorkItem?
+
+    /// Which back end is currently in control.
+    private enum Backend { case pending, system, scriptable }
+    @ObservationIgnored private var backend: Backend = .scriptable
+
     @ObservationIgnored private let artworkSession: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 10
@@ -72,6 +101,10 @@ final class MusicController {
             start()
         } else if !new.isEnabled && isStarted {
             stop()
+        } else if isStarted && new.useSystemNowPlaying != old.useSystemNowPlaying {
+            // Switch back ends: tear everything down and start fresh.
+            stop()
+            start()
         } else if new.preferredSource != old.preferredSource {
             recompute(announceTrackChange: false)
         } else if new.showCompact != old.showCompact || new.pausedTimeout != old.pausedTimeout {
@@ -86,8 +119,81 @@ final class MusicController {
         guard settings.isEnabled, !isStarted else { return }
         isStarted = true
 
+        if settings.useSystemNowPlaying {
+            startSystemBackend()
+        } else {
+            startScriptableBackend()
+        }
+    }
+
+    func stop() {
+        systemTimeout?.cancel()
+        systemTimeout = nil
+        bridge.onMessage = nil
+        bridge.stop()
+        for (center, token) in observers {
+            center.removeObserver(token)
+        }
+        observers.removeAll()
+        isStarted = false
+        backend = .scriptable
+        snapshots.removeAll()
+        updatedAt.removeAll()
+        artworkTask?.cancel()
+        snapshot = nil
+        artwork = nil
+        artworkColor = nil
+        onEvent?(.nowPlaying(nil))
+    }
+
+    /// Re-reads the current state (launch, wake, permission granted).
+    func refreshAll() {
+        guard isStarted else { return }
+        if backend == .system {
+            bridge.send(.refresh)
+            return
+        }
+        for source in MusicSourceKind.scriptable where Self.isRunning(source) {
+            permissions.refreshAutomation(for: source) { [weak self] status in
+                if status == .granted {
+                    self?.queryState(of: source)
+                }
+            }
+        }
+    }
+
+    /// Sends the current state again (after settings changed).
+    func republish() {
+        onEvent?(.nowPlaying(snapshot))
+    }
+
+    // MARK: - Back ends
+
+    private func startSystemBackend() {
+        backend = .pending
+        bridge.onMessage = { [weak self] message in
+            MainActor.assumeIsolated { self?.handleBridgeMessage(message) }
+        }
+        bridge.start()
+        // If the helper never reports ready, fall back to the players. Only
+        // act while still pending: a `.ready` that arrived first already
+        // switched the back end (and cancelled this work item).
+        let timeout = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.backend == .pending else { return }
+                self.systemBackendUnavailable()
+            }
+        }
+        systemTimeout = timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: timeout)
+    }
+
+    private func startScriptableBackend() {
+        backend = .scriptable
+        guard observers.isEmpty else { return }
+
         let distributed = DistributedNotificationCenter.default()
-        for source in MusicSourceKind.allCases {
+        for source in MusicSourceKind.scriptable {
             let token = distributed.addObserver(
                 forName: Notification.Name(source.changeNotificationName),
                 object: nil,
@@ -118,36 +224,53 @@ final class MusicController {
         refreshAll()
     }
 
-    func stop() {
-        for (center, token) in observers {
-            center.removeObserver(token)
-        }
-        observers.removeAll()
-        isStarted = false
-        snapshots.removeAll()
-        updatedAt.removeAll()
-        artworkTask?.cancel()
-        snapshot = nil
-        artwork = nil
-        artworkColor = nil
-        onEvent?(.nowPlaying(nil))
+    private func systemBackendUnavailable() {
+        guard backend != .scriptable else { return }
+        systemTimeout?.cancel()
+        systemTimeout = nil
+        bridge.onMessage = nil
+        bridge.stop()
+        snapshots.removeValue(forKey: .system)
+        updatedAt.removeValue(forKey: .system)
+        startScriptableBackend()
+        recompute(announceTrackChange: false)
     }
 
-    /// Re-reads the state of running players (launch, wake, permission granted).
-    func refreshAll() {
-        guard isStarted else { return }
-        for source in MusicSourceKind.allCases where Self.isRunning(source) {
-            permissions.refreshAutomation(for: source) { [weak self] status in
-                if status == .granted {
-                    self?.queryState(of: source)
+    private func handleBridgeMessage(_ message: MediaRemoteMessage) {
+        switch message {
+        case .ready:
+            systemTimeout?.cancel()
+            systemTimeout = nil
+            backend = .system
+            lastErrorMessage = nil
+        case let .error(text):
+            // The helper cannot work here: use the scriptable players instead.
+            lastErrorMessage = text
+            systemBackendUnavailable()
+        case let .nowPlaying(update):
+            guard backend == .system else { return }
+            applySystemUpdate(update)
+        }
+    }
+
+    private func applySystemUpdate(_ update: MediaRemoteUpdate) {
+        let now = Date()
+        if let snapshot = update.snapshot, let track = snapshot.track {
+            let key = "system:\(track.id)"
+            if update.hasArtwork {
+                if let data = update.artwork, let image = NSImage(data: data) {
+                    artworkCache.setObject(image, forKey: key as NSString)
                 }
+            } else {
+                artworkCache.removeObject(forKey: key as NSString)
             }
+            snapshots[.system] = snapshot
+            updatedAt[.system] = now
+        } else {
+            snapshots[.system] = nil
+            updatedAt[.system] = nil
         }
-    }
-
-    /// Sends the current state again (after settings changed).
-    func republish() {
-        onEvent?(.nowPlaying(snapshot))
+        recompute(announceTrackChange: true)
     }
 
     // MARK: - Position
@@ -160,44 +283,60 @@ final class MusicController {
     // MARK: - Commands
 
     func playPause() {
-        guard let source = commandSource() else { return }
-        // Optimistic update: the player's notification confirms a moment later.
-        if var current = snapshots[source] {
+        // Optimistic update: the back end confirms a moment later.
+        if let current = snapshot, var stored = snapshots[current.source] {
             let now = Date()
-            let elapsed = current.position?.elapsed(at: now, duration: current.track?.duration) ?? 0
-            current.state = current.isPlaying ? .paused : .playing
-            current.position = PlaybackPosition(elapsed: elapsed, timestamp: now, rate: current.isPlaying ? 1 : 0)
-            snapshots[source] = current
+            let elapsed = stored.position?.elapsed(at: now, duration: stored.track?.duration) ?? 0
+            stored.state = stored.isPlaying ? .paused : .playing
+            stored.position = PlaybackPosition(elapsed: elapsed, timestamp: now, rate: stored.isPlaying ? 1 : 0)
+            snapshots[current.source] = stored
             recompute(announceTrackChange: false)
         }
+        if backend == .system {
+            bridge.send(.togglePlayPause)
+            return
+        }
+        guard let source = commandSource() else { return }
         send(MusicScripts.playPause(for: source), to: source)
     }
 
     func next() {
+        if backend == .system {
+            bridge.send(.nextTrack)
+            return
+        }
         guard let source = commandSource() else { return }
         send(MusicScripts.nextTrack(for: source), to: source)
     }
 
     func previous() {
+        if backend == .system {
+            bridge.send(.previousTrack)
+            return
+        }
         guard let source = commandSource() else { return }
         send(MusicScripts.previousTrack(for: source), to: source)
     }
 
     /// Seeks to a fraction (0...1) of the current track.
     func seek(toFraction fraction: Double) {
-        guard let source = commandSource(), var current = snapshots[source],
-              let duration = current.track?.duration, duration > 0
+        guard let current = snapshot, var stored = snapshots[current.source],
+              let duration = stored.track?.duration, duration > 0
         else { return }
         let seconds = min(max(fraction, 0), 1) * duration
-        current.position = PlaybackPosition(elapsed: seconds, timestamp: Date(), rate: current.isPlaying ? 1 : 0)
-        snapshots[source] = current
+        stored.position = PlaybackPosition(elapsed: seconds, timestamp: Date(), rate: stored.isPlaying ? 1 : 0)
+        snapshots[current.source] = stored
         recompute(announceTrackChange: false)
-        send(MusicScripts.seek(to: seconds, for: source), to: source, cacheable: false)
+        if backend == .system {
+            bridge.send(.seek(seconds))
+            return
+        }
+        send(MusicScripts.seek(to: seconds, for: current.source), to: current.source, cacheable: false)
     }
 
-    /// Shows the Automation prompt for the active (or running) player.
+    /// Shows the Automation prompt for the active (or running) scriptable player.
     func requestAccess() {
-        guard let source = snapshot?.source ?? MusicSourceKind.allCases.first(where: { Self.isRunning($0) }) else { return }
+        guard let source = scriptableSource(snapshot?.source) ?? MusicSourceKind.scriptable.first(where: { Self.isRunning($0) }) else { return }
         permissions.requestAutomation(for: source) { [weak self] status in
             guard let self else { return }
             if status == .granted {
@@ -213,14 +352,17 @@ final class MusicController {
         permissions.open(.automation)
     }
 
-    /// Opens the active player (or Music when nothing plays).
+    /// Opens the app that is playing (or Music when nothing plays).
     func openPlayer() {
-        let source = snapshot?.source ?? preferredKind ?? .appleMusic
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: source.bundleIdentifier) else { return }
+        let bundleID = snapshot?.playerBundleIdentifier
+            ?? (preferredKind ?? .appleMusic).bundleIdentifier
+        guard !bundleID.isEmpty,
+              let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+        else { return }
         NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
     }
 
-    // MARK: - Updates
+    // MARK: - Scriptable updates
 
     private func handleNotification(_ info: [AnyHashable: Any], from source: MusicSourceKind) {
         let now = Date()
@@ -275,7 +417,7 @@ final class MusicController {
     }
 
     private func applicationTerminated(_ bundleIdentifier: String?) {
-        guard let source = MusicSourceKind.allCases.first(where: { $0.bundleIdentifier == bundleIdentifier }) else { return }
+        guard let source = MusicSourceKind.scriptable.first(where: { $0.bundleIdentifier == bundleIdentifier }) else { return }
         guard snapshots[source] != nil else { return }
         snapshots[source] = nil
         recompute(announceTrackChange: false)
@@ -289,9 +431,16 @@ final class MusicController {
         }
     }
 
-    /// Preferred player if it has a track; otherwise the most recently updated
+    private func scriptableSource(_ source: MusicSourceKind?) -> MusicSourceKind? {
+        guard let source, source != .system else { return nil }
+        return source
+    }
+
+    /// In system mode there is only one snapshot. In scriptable mode: the
+    /// preferred player if it has a track; otherwise the most recently updated
     /// playing player; otherwise the most recently updated paused one.
     private func chooseSource() -> MusicSourceKind? {
+        if backend == .system { return snapshots[.system] != nil ? .system : nil }
         let available = snapshots.filter { $0.value.track != nil }
         if let preferred = preferredKind, available[preferred] != nil { return preferred }
         let playing = available.filter { $0.value.isPlaying }
@@ -311,7 +460,7 @@ final class MusicController {
             if isNewTrack {
                 loadArtwork(for: newSnapshot, force: false)
                 if announceTrackChange, previousTrack != nil, newSnapshot.isPlaying {
-                    onEvent?(.trackChanged(track, source: newSnapshot.source))
+                    onEvent?(.trackChanged(track, source: newSnapshot.source, playerName: newSnapshot.playerName))
                 }
             }
         } else if artwork != nil {
@@ -321,8 +470,8 @@ final class MusicController {
     }
 
     private func commandSource() -> MusicSourceKind? {
-        if let source = snapshot?.source, Self.isRunning(source) { return source }
-        return MusicSourceKind.allCases.first(where: { Self.isRunning($0) })
+        if let source = scriptableSource(snapshot?.source), Self.isRunning(source) { return source }
+        return MusicSourceKind.scriptable.first(where: { Self.isRunning($0) })
     }
 
     private func send(_ script: String, to source: MusicSourceKind, cacheable: Bool = true) {
@@ -375,6 +524,12 @@ final class MusicController {
             setArtwork(cached, key: key)
             return
         }
+        // System artwork arrives with the now-playing update; if it is not yet
+        // cached, show the placeholder until the next update delivers it.
+        if snapshot.source == .system {
+            setArtwork(nil, key: key)
+            return
+        }
         guard permissions.automation[snapshot.source] == .granted, Self.isRunning(snapshot.source) else {
             setArtwork(nil, key: key)
             return
@@ -412,6 +567,8 @@ final class MusicController {
                 return
             }
             downloadArtwork(from: url, key: key)
+        case .system:
+            setArtwork(nil, key: key)
         }
     }
 
@@ -448,6 +605,7 @@ final class MusicController {
     // MARK: - Helpers
 
     static func isRunning(_ source: MusicSourceKind) -> Bool {
+        !source.bundleIdentifier.isEmpty &&
         !NSRunningApplication.runningApplications(withBundleIdentifier: source.bundleIdentifier).isEmpty
     }
 

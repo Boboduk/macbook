@@ -43,12 +43,14 @@ public enum IslandEvent: Equatable, Sendable {
     case outputDeviceChanged(name: String, isHeadphones: Bool)
     /// Current player state; `nil` when no supported player is active.
     case nowPlaying(NowPlayingSnapshot?)
-    case trackChanged(TrackInfo, source: MusicSourceKind)
+    case trackChanged(TrackInfo, source: MusicSourceKind, playerName: String? = nil)
     /// `nil` when neither the countdown nor the stopwatch is active.
     case timerActive(TimerActivityMode?, isRunning: Bool)
     case timerFinished(title: String, body: String)
     case power(PowerState, PowerChange)
     case notice(Notice)
+    /// A notification of another app, read from the Notification Center database.
+    case systemNotification(SystemNotification, appName: String)
 }
 
 /// Translates module events into activities, applying the user's settings
@@ -112,14 +114,14 @@ public final class EventRouter {
         case let .nowPlaying(snapshot):
             handleNowPlaying(snapshot)
 
-        case let .trackChanged(track, source):
+        case let .trackChanged(track, source, playerName):
             guard settings.music.isEnabled, settings.music.peekOnTrackChange else { return }
             log?.append("music", "track changed (\(source.displayName))")
             activities.upsert(Activity(
                 id: .musicPeek, kind: .music, priority: .low,
                 title: track.title, subtitle: track.artist,
                 style: .banner, lifetime: .transient(duration: 3),
-                payload: .track(TrackPayload(title: track.title, artist: track.artist, album: track.album, source: source))
+                payload: .track(TrackPayload(title: track.title, artist: track.artist, album: track.album, source: source, playerName: playerName))
             ))
 
         case let .timerActive(mode, isRunning):
@@ -150,6 +152,29 @@ public final class EventRouter {
 
         case let .power(state, change):
             handlePower(state, change)
+
+        case let .systemNotification(notification, appName):
+            let notifications = settings.notifications
+            guard notifications.isEnabled, notifications.mirrorSystemNotifications,
+                  !notifications.mutedApps.contains(notification.bundleIdentifier)
+            else { return dropped("system notification") }
+            log?.append("notice", "notification from \(notification.bundleIdentifier)")
+            let title = notification.title.isEmpty ? appName : notification.title
+            let text = [notification.subtitle, notification.body].filter { !$0.isEmpty }.joined(separator: " — ")
+            activities.upsert(Activity(
+                id: .notice("system.\(notification.recordID)"), kind: .notification, priority: .normal,
+                title: title, subtitle: notifications.showSystemNotificationText ? text : "",
+                style: .banner,
+                lifetime: .transient(duration: notifications.duration),
+                updatePolicy: .keepTimer, requeueOnPreempt: true,
+                payload: .message(MessagePayload(
+                    symbol: "app.badge.fill",
+                    title: title,
+                    body: notifications.showSystemNotificationText ? text : "",
+                    appBundleIdentifier: notification.bundleIdentifier,
+                    appName: appName
+                ))
+            ))
 
         case let .notice(notice):
             guard settings.notifications.isEnabled else { return dropped("notice") }
@@ -199,7 +224,7 @@ public final class EventRouter {
             id: .music, kind: .music, priority: .normal,
             title: track.title, subtitle: track.artist,
             style: .compact(.narrow), lifetime: .live(expiresAfter: expiresAfter),
-            payload: .track(TrackPayload(title: track.title, artist: track.artist, album: track.album, source: snapshot.source))
+            payload: .track(TrackPayload(title: track.title, artist: track.artist, album: track.album, source: snapshot.source, playerName: snapshot.playerName))
         ))
     }
 

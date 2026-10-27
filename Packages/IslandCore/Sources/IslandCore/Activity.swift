@@ -106,12 +106,25 @@ public struct MessagePayload: Equatable, Sendable {
     public var body: String
     /// Tab opened when the user taps the banner.
     public var actionTab: IslandTab?
+    /// For notifications of other apps: the app that posted it (icon, name,
+    /// opened on tap).
+    public var appBundleIdentifier: String?
+    public var appName: String?
 
-    public init(symbol: String, title: String, body: String, actionTab: IslandTab? = nil) {
+    public init(
+        symbol: String,
+        title: String,
+        body: String,
+        actionTab: IslandTab? = nil,
+        appBundleIdentifier: String? = nil,
+        appName: String? = nil
+    ) {
         self.symbol = symbol
         self.title = title
         self.body = body
         self.actionTab = actionTab
+        self.appBundleIdentifier = appBundleIdentifier
+        self.appName = appName
     }
 }
 
@@ -120,12 +133,15 @@ public struct TrackPayload: Equatable, Sendable {
     public var artist: String
     public var album: String
     public var source: MusicSourceKind
+    /// The playing app's name (system Now Playing).
+    public var playerName: String?
 
-    public init(title: String, artist: String, album: String, source: MusicSourceKind) {
+    public init(title: String, artist: String, album: String, source: MusicSourceKind, playerName: String? = nil) {
         self.title = title
         self.artist = artist
         self.album = album
         self.source = source
+        self.playerName = playerName
     }
 }
 

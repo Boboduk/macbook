@@ -1,16 +1,26 @@
 import Foundation
 
-/// Players with a documented scripting interface and public change notifications.
+/// Where now-playing information comes from.
+///
+/// * `appleMusic`, `spotify`: players with a documented scripting interface
+///   and public change notifications.
+/// * `system`: the system-wide "Now Playing" session (any app: browsers,
+///   video players, podcasts …), read through the MediaRemote helper.
 public enum MusicSourceKind: String, Codable, CaseIterable, Identifiable, Sendable {
     case appleMusic
     case spotify
+    case system
 
     public var id: String { rawValue }
+
+    /// Players controlled through AppleScript.
+    public static let scriptable: [MusicSourceKind] = [.appleMusic, .spotify]
 
     public var bundleIdentifier: String {
         switch self {
         case .appleMusic: return "com.apple.Music"
         case .spotify: return "com.spotify.client"
+        case .system: return ""
         }
     }
 
@@ -18,6 +28,7 @@ public enum MusicSourceKind: String, Codable, CaseIterable, Identifiable, Sendab
         switch self {
         case .appleMusic: return "Music"
         case .spotify: return "Spotify"
+        case .system: return "Now Playing"
         }
     }
 
@@ -26,6 +37,7 @@ public enum MusicSourceKind: String, Codable, CaseIterable, Identifiable, Sendab
         switch self {
         case .appleMusic: return "com.apple.Music.playerInfo"
         case .spotify: return "com.spotify.client.PlaybackStateChanged"
+        case .system: return ""
         }
     }
 }
@@ -89,15 +101,30 @@ public struct NowPlayingSnapshot: Equatable, Sendable {
     public var state: PlaybackState
     /// `nil` when the notification did not include a position.
     public var position: PlaybackPosition?
+    /// The app that plays (for `system` snapshots: Safari, Chrome, VLC …).
+    public var playerBundleIdentifier: String?
+    public var playerName: String?
 
-    public init(source: MusicSourceKind, track: TrackInfo?, state: PlaybackState, position: PlaybackPosition?) {
+    public init(
+        source: MusicSourceKind,
+        track: TrackInfo?,
+        state: PlaybackState,
+        position: PlaybackPosition?,
+        playerBundleIdentifier: String? = nil,
+        playerName: String? = nil
+    ) {
         self.source = source
         self.track = track
         self.state = state
         self.position = position
+        self.playerBundleIdentifier = playerBundleIdentifier ?? (source.bundleIdentifier.isEmpty ? nil : source.bundleIdentifier)
+        self.playerName = playerName ?? (source == .system ? nil : source.displayName)
     }
 
     public var isPlaying: Bool { state == .playing }
+
+    /// Name shown to the user: the playing app, or the source.
+    public var displayName: String { playerName ?? source.displayName }
 }
 
 /// Converts the player's notification `userInfo` and AppleScript replies into
@@ -124,6 +151,10 @@ public enum NowPlayingParser {
             if let elapsed = number(userInfo["Playback Position"]) {
                 position = PlaybackPosition(elapsed: elapsed, timestamp: now, rate: state == .playing ? 1 : 0)
             }
+        case .system:
+            // System Now Playing data comes from `MediaRemoteParser`.
+            duration = number(userInfo["Duration"])
+            identifier = string(userInfo["Identifier"])
         }
 
         let track: TrackInfo?

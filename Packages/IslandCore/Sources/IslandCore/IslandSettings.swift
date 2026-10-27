@@ -111,6 +111,10 @@ public struct IslandSettings: Codable, Equatable, Sendable {
         /// Spotify artwork is only available as an https URL.
         public var loadRemoteArtwork = true
         public var showPlaybackIndicator = true
+        /// Follow the system-wide Now Playing session (every player, browsers
+        /// included) through the MediaRemote helper; falls back to Music and
+        /// Spotify when the helper is unavailable.
+        public var useSystemNowPlaying = true
         public init() {}
     }
 
@@ -146,6 +150,15 @@ public struct IslandSettings: Codable, Equatable, Sendable {
     public struct Notifications: Codable, Equatable, Sendable {
         public var isEnabled = true
         public var duration: Double = 4
+        /// Show notifications of all apps in the island (needs Full Disk Access
+        /// to read the Notification Center database).
+        public var mirrorSystemNotifications = false
+        public var showSystemNotificationText = true
+        /// Close macOS banners once they are shown in the island
+        /// (experimental, needs Accessibility access).
+        public var dismissSystemBanners = false
+        /// Bundle identifiers whose notifications are not mirrored.
+        public var mutedApps: [String] = []
         public init() {}
     }
 

@@ -71,6 +71,10 @@ enum MusicScripts {
                 return ""
             end tell
             """
+        case .system:
+            // System now-playing artwork is delivered by the MediaRemote
+            // helper as image data; no AppleScript is involved.
+            return ""
         }
     }
 

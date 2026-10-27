@@ -37,7 +37,15 @@ struct BannerIslandView: View {
         case .track:
             ArtworkView(size: 38, cornerRadius: 8)
         case let .message(message):
-            BannerSymbol(name: message.symbol)
+            if let bundleID = message.appBundleIdentifier,
+               let icon = AppDirectory.shared.icon(for: bundleID) {
+                Image(nsImage: icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 32, height: 32)
+            } else {
+                BannerSymbol(name: message.symbol)
+            }
         case let .level(level):
             BannerSymbol(name: activity.kind == .brightness
                 ? IslandTheme.brightnessSymbol(level: level.value)

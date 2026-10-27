@@ -167,7 +167,9 @@
 "Denied" = "Запрещено";
 "Not requested" = "Не запрашивалось";
 "App not running" = "Приложение не запущено";
-"Track details come from Music and Spotify notifications. Artwork, progress and controls need permission to control the player (Automation). Other players are not supported: macOS offers no public API for them." = "Сведения о треке приходят из уведомлений «Музыки» и Spotify. Обложке, прогрессу и управлению нужно разрешение на управление плеером («Автоматизация»). Другие плееры не поддерживаются: у macOS нет для них публичного API.";
+"“Show playback from all apps” reports whatever is playing anywhere — Music, Spotify, Safari, Chrome, VLC — with no permission needed. Turn it off to use only Music and Spotify through their public notifications, where artwork, progress and controls need permission to control the player (Automation)." = "«Показывать воспроизведение из всех приложений» отображает всё, что играет где угодно — «Музыка», Spotify, Safari, Chrome, VLC — без разрешений. Выключите, чтобы использовать только «Музыку» и Spotify через их публичные уведомления, где обложке, прогрессу и управлению нужно разрешение на управление плеером («Автоматизация»).";
+"Show playback from all apps" = "Показывать воспроизведение из всех приложений";
+"Play something in any app to control it here." = "Запустите что-нибудь в любом приложении, чтобы управлять им здесь.";
 "Volume & Brightness" = "Громкость и яркость";
 "Volume HUD" = "HUD громкости";
 "Brightness HUD" = "HUD яркости";
@@ -201,7 +203,14 @@
 "Notification permission" = "Разрешение на уведомления";
 "Notifications" = "Уведомления";
 "Island notifications" = "Уведомления в острове";
-"Messages from AlcoveInspired itself (timer finished, permission problems, output device changes). Notifications of other apps are not available through public macOS APIs." = "Сообщения самого AlcoveInspired (таймер завершён, проблемы с разрешениями, смена устройства вывода). Уведомления других приложений недоступны через публичные API macOS.";
+"Island banners for AlcoveInspired's own messages (timer finished, permissions, output device). Mirroring other apps reads the Notification Center database and needs Full Disk Access. To avoid a second, system banner, set those apps to the “None” alert style in System Settings › Notifications, or turn on a Focus; the experimental option tries to close the system banner automatically (needs Accessibility)." = "Баннеры острова для собственных сообщений AlcoveInspired (таймер завершён, разрешения, устройство вывода). Зеркалирование других приложений читает базу Центра уведомлений и требует полного доступа к диску. Чтобы не было второго, системного баннера, задайте этим приложениям стиль «Нет» в «Системных настройках › Уведомления» или включите фокусирование; экспериментальный вариант пытается закрыть системный баннер автоматически (нужен доступ к универсальному доступу).";
+"Mirror notifications from other apps" = "Зеркалировать уведомления других приложений";
+"Show the notification text" = "Показывать текст уведомления";
+"Dismiss the system banner (experimental)" = "Закрывать системный баннер (эксперим.)";
+"Full Disk Access" = "Полный доступ к диску";
+"Required to read notifications" = "Нужен для чтения уведомлений";
+"Apps" = "Приложения";
+"Apps appear here after they send a notification." = "Приложения появятся здесь после того, как пришлют уведомление.";
 "Battery" = "Аккумулятор";
 "Show charger connected / disconnected" = "Показывать подключение и отключение зарядки";
 "Low battery warning at" = "Предупреждать о низком заряде при";

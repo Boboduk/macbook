@@ -15,8 +15,8 @@ import os
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT = "AlcoveInspired"
 BUNDLE_ID = "io.github.boboduk.AlcoveInspired"
-MARKETING_VERSION = "1.0.0"
-BUILD_NUMBER = "1"
+MARKETING_VERSION = "1.1.0"
+BUILD_NUMBER = "2"
 DEPLOYMENT_TARGET = "15.0"
 CORE_PACKAGE_PATH = "Packages/IslandCore"
 
@@ -38,6 +38,12 @@ IDS = {name: oid(name) for name in [
     "testSourcesPhase", "testFrameworksPhase", "testResourcesPhase",
     "testConfigList", "testDebug", "testRelease",
     "testContainerProxy", "testTargetDependency",
+    # NowPlayingHelper dynamic library (loaded by /usr/bin/perl at runtime).
+    "helperProduct", "syncHelperGroup", "helperTarget",
+    "helperSourcesPhase", "helperFrameworksPhase",
+    "helperConfigList", "helperDebug", "helperRelease",
+    "helperContainerProxy", "helperTargetDependency",
+    "embedPhase", "helperEmbedBuildFile",
 ]}
 
 
@@ -153,6 +159,37 @@ TEST_COMMON = {
     "TEST_HOST": f"$(BUILT_PRODUCTS_DIR)/{PROJECT}.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/{PROJECT}",
 }
 
+# NowPlayingHelper: a small Objective-C dynamic library. The app never links
+# it; it is embedded in Contents/Frameworks and loaded at runtime by
+# /usr/bin/perl (see MediaRemoteBridge). PRODUCT_NAME "NowPlayingHelper" with
+# the default "lib" prefix yields libNowPlayingHelper.dylib.
+HELPER_COMMON = {
+    "CODE_SIGN_IDENTITY": "-",
+    "CODE_SIGN_STYLE": "Manual",
+    "CURRENT_PROJECT_VERSION": BUILD_NUMBER,
+    "DEFINES_MODULE": "NO",
+    "DEVELOPMENT_TEAM": "",
+    "DYLIB_COMPATIBILITY_VERSION": "1",
+    "DYLIB_CURRENT_VERSION": "1",
+    "DYLIB_INSTALL_NAME_BASE": "@rpath",
+    "ENABLE_HARDENED_RUNTIME": "NO",
+    "EXECUTABLE_PREFIX": "lib",
+    "GENERATE_INFOPLIST_FILE": "NO",
+    "MACH_O_TYPE": "mh_dylib",
+    "MACOSX_DEPLOYMENT_TARGET": DEPLOYMENT_TARGET,
+    "MARKETING_VERSION": MARKETING_VERSION,
+    "OTHER_LDFLAGS": ["-framework", "AppKit", "-framework", "Foundation"],
+    "PRODUCT_NAME": "NowPlayingHelper",
+    "SKIP_INSTALL": "YES",
+}
+
+HELPER_DEBUG = {
+    **HELPER_COMMON,
+    "GCC_OPTIMIZATION_LEVEL": "0",
+    "GCC_PREPROCESSOR_DEFINITIONS": ["DEBUG=1", "$(inherited)"],
+    "ONLY_ACTIVE_ARCH": "YES",
+}
+
 
 def build_configuration(key: str, name: str, settings: dict) -> str:
     return (
@@ -178,6 +215,7 @@ def pbxproj() -> str:
 
 /* Begin PBXBuildFile section */
 		{i['coreBuildFile']} /* IslandCore in Frameworks */ = {{isa = PBXBuildFile; productRef = {i['coreProductDep']} /* IslandCore */; }};
+		{i['helperEmbedBuildFile']} /* libNowPlayingHelper.dylib in Embed Helper */ = {{isa = PBXBuildFile; fileRef = {i['helperProduct']} /* libNowPlayingHelper.dylib */; settings = {{ATTRIBUTES = (CodeSignOnCopy, ); }}; }};
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -186,6 +224,7 @@ def pbxproj() -> str:
 		{i['infoPlistRef']} /* Info.plist */ = {{isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; }};
 		{i['readmeRef']} /* README.md */ = {{isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; }};
 		{i['testProduct']} /* {PROJECT}Tests.xctest */ = {{isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = {PROJECT}Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; }};
+		{i['helperProduct']} /* libNowPlayingHelper.dylib */ = {{isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libNowPlayingHelper.dylib; sourceTree = BUILT_PRODUCTS_DIR; }};
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -196,7 +235,28 @@ def pbxproj() -> str:
 			remoteGlobalIDString = {i['appTarget']};
 			remoteInfo = {PROJECT};
 		}};
+		{i['helperContainerProxy']} /* PBXContainerItemProxy */ = {{
+			isa = PBXContainerItemProxy;
+			containerPortal = {i['project']} /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = {i['helperTarget']};
+			remoteInfo = NowPlayingHelper;
+		}};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		{i['embedPhase']} /* Embed Helper */ = {{
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				{i['helperEmbedBuildFile']} /* libNowPlayingHelper.dylib in Embed Helper */,
+			);
+			name = "Embed Helper";
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		{i['syncAppGroup']} /* {PROJECT} */ = {{
@@ -207,6 +267,11 @@ def pbxproj() -> str:
 		{i['syncTestGroup']} /* {PROJECT}Tests */ = {{
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = {PROJECT}Tests;
+			sourceTree = "<group>";
+		}};
+		{i['syncHelperGroup']} /* NowPlayingHelper */ = {{
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NowPlayingHelper;
 			sourceTree = "<group>";
 		}};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -227,6 +292,13 @@ def pbxproj() -> str:
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{i['helperFrameworksPhase']} /* Frameworks */ = {{
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -236,6 +308,7 @@ def pbxproj() -> str:
 				{i['readmeRef']} /* README.md */,
 				{i['syncAppGroup']} /* {PROJECT} */,
 				{i['syncTestGroup']} /* {PROJECT}Tests */,
+				{i['syncHelperGroup']} /* NowPlayingHelper */,
 				{i['configGroup']} /* Config */,
 				{i['productsGroup']} /* Products */,
 			);
@@ -255,6 +328,7 @@ def pbxproj() -> str:
 			children = (
 				{i['appProduct']} /* {PROJECT}.app */,
 				{i['testProduct']} /* {PROJECT}Tests.xctest */,
+				{i['helperProduct']} /* libNowPlayingHelper.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -269,10 +343,12 @@ def pbxproj() -> str:
 				{i['sourcesPhase']} /* Sources */,
 				{i['frameworksPhase']} /* Frameworks */,
 				{i['resourcesPhase']} /* Resources */,
+				{i['embedPhase']} /* Embed Helper */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				{i['helperTargetDependency']} /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				{i['syncAppGroup']} /* {PROJECT} */,
@@ -284,6 +360,27 @@ def pbxproj() -> str:
 			productName = {PROJECT};
 			productReference = {i['appProduct']} /* {PROJECT}.app */;
 			productType = "com.apple.product-type.application";
+		}};
+		{i['helperTarget']} /* NowPlayingHelper */ = {{
+			isa = PBXNativeTarget;
+			buildConfigurationList = {i['helperConfigList']} /* Build configuration list for PBXNativeTarget "NowPlayingHelper" */;
+			buildPhases = (
+				{i['helperSourcesPhase']} /* Sources */,
+				{i['helperFrameworksPhase']} /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				{i['syncHelperGroup']} /* NowPlayingHelper */,
+			);
+			name = NowPlayingHelper;
+			packageProductDependencies = (
+			);
+			productName = NowPlayingHelper;
+			productReference = {i['helperProduct']} /* libNowPlayingHelper.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
 		}};
 		{i['testTarget']} /* {PROJECT}Tests */ = {{
 			isa = PBXNativeTarget;
@@ -321,6 +418,9 @@ def pbxproj() -> str:
 					{i['appTarget']} = {{
 						CreatedOnToolsVersion = 16.0;
 					}};
+					{i['helperTarget']} = {{
+						CreatedOnToolsVersion = 16.0;
+					}};
 					{i['testTarget']} = {{
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = {i['appTarget']};
@@ -346,6 +446,7 @@ def pbxproj() -> str:
 			projectRoot = "";
 			targets = (
 				{i['appTarget']} /* {PROJECT} */,
+				{i['helperTarget']} /* NowPlayingHelper */,
 				{i['testTarget']} /* {PROJECT}Tests */,
 			);
 		}};
@@ -383,6 +484,13 @@ def pbxproj() -> str:
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		}};
+		{i['helperSourcesPhase']} /* Sources */ = {{
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		}};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -391,10 +499,15 @@ def pbxproj() -> str:
 			target = {i['appTarget']} /* {PROJECT} */;
 			targetProxy = {i['testContainerProxy']} /* PBXContainerItemProxy */;
 		}};
+		{i['helperTargetDependency']} /* PBXTargetDependency */ = {{
+			isa = PBXTargetDependency;
+			target = {i['helperTarget']} /* NowPlayingHelper */;
+			targetProxy = {i['helperContainerProxy']} /* PBXContainerItemProxy */;
+		}};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-{build_configuration('projectDebug', 'Debug', PROJECT_DEBUG)}{build_configuration('projectRelease', 'Release', PROJECT_RELEASE)}{build_configuration('targetDebug', 'Debug', TARGET_DEBUG)}{build_configuration('targetRelease', 'Release', TARGET_COMMON)}{build_configuration('testDebug', 'Debug', TEST_COMMON)}{build_configuration('testRelease', 'Release', TEST_COMMON)}/* End XCBuildConfiguration section */
+{build_configuration('projectDebug', 'Debug', PROJECT_DEBUG)}{build_configuration('projectRelease', 'Release', PROJECT_RELEASE)}{build_configuration('targetDebug', 'Debug', TARGET_DEBUG)}{build_configuration('targetRelease', 'Release', TARGET_COMMON)}{build_configuration('testDebug', 'Debug', TEST_COMMON)}{build_configuration('testRelease', 'Release', TEST_COMMON)}{build_configuration('helperDebug', 'Debug', HELPER_DEBUG)}{build_configuration('helperRelease', 'Release', HELPER_COMMON)}/* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
 		{i['projectConfigList']} /* Build configuration list for PBXProject "{PROJECT}" */ = {{
@@ -420,6 +533,15 @@ def pbxproj() -> str:
 			buildConfigurations = (
 				{i['testDebug']} /* Debug */,
 				{i['testRelease']} /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		}};
+		{i['helperConfigList']} /* Build configuration list for PBXNativeTarget "NowPlayingHelper" */ = {{
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				{i['helperDebug']} /* Debug */,
+				{i['helperRelease']} /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		43F527816A4B773BA0C6E3FC /* IslandCore in Frameworks */ = {isa = PBXBuildFile; productRef = A6D7596B626E0383B2ADCE5B /* IslandCore */; };
+		676E53D9AC1399669E6F71CC /* libNowPlayingHelper.dylib in Embed Helper */ = {isa = PBXBuildFile; fileRef = 7F6BA1ACFA0A9D3BFC7E1364 /* libNowPlayingHelper.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -16,6 +17,7 @@
 		3BE82F4A232972C6B06520A4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A16ACD3207B4A4A31669AEED /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		55D806B04198BC33CC8F2C54 /* AlcoveInspiredTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AlcoveInspiredTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7F6BA1ACFA0A9D3BFC7E1364 /* libNowPlayingHelper.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libNowPlayingHelper.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,7 +28,28 @@
 			remoteGlobalIDString = 428ADBFEAFBA5B2278F449AC;
 			remoteInfo = AlcoveInspired;
 		};
+		CBCD97D088385EAFE9539216 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C1F33C982ECEBA74FF5FAD81 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 925928D1EB3095BA6B69D3AE;
+			remoteInfo = NowPlayingHelper;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		07384019854820A2AF92FF21 /* Embed Helper */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				676E53D9AC1399669E6F71CC /* libNowPlayingHelper.dylib in Embed Helper */,
+			);
+			name = "Embed Helper";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C7F55B8D2F7B79980FDCCF26 /* AlcoveInspired */ = {
@@ -37,6 +60,11 @@
 		B55E480E28608AC0F8C82EE1 /* AlcoveInspiredTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = AlcoveInspiredTests;
+			sourceTree = "<group>";
+		};
+		CE954FB7525B85EAA699B7DC /* NowPlayingHelper */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NowPlayingHelper;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -57,6 +85,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FBBF3250CE05D59EB0CE9E86 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -66,6 +101,7 @@
 				A16ACD3207B4A4A31669AEED /* README.md */,
 				C7F55B8D2F7B79980FDCCF26 /* AlcoveInspired */,
 				B55E480E28608AC0F8C82EE1 /* AlcoveInspiredTests */,
+				CE954FB7525B85EAA699B7DC /* NowPlayingHelper */,
 				EF78C113D35DE73117799D58 /* Config */,
 				FF5B19808ED40EC29252EC38 /* Products */,
 			);
@@ -85,6 +121,7 @@
 			children = (
 				4A6F3BCBC63D1BEAB85A181E /* AlcoveInspired.app */,
 				55D806B04198BC33CC8F2C54 /* AlcoveInspiredTests.xctest */,
+				7F6BA1ACFA0A9D3BFC7E1364 /* libNowPlayingHelper.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -99,10 +136,12 @@
 				24B670788EAE6D8AA2BC6CE9 /* Sources */,
 				82BD66A833578846F9808587 /* Frameworks */,
 				893A6C756ED323DB4DFE7B5E /* Resources */,
+				07384019854820A2AF92FF21 /* Embed Helper */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				15357FB992F29267AAAA1E1B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C7F55B8D2F7B79980FDCCF26 /* AlcoveInspired */,
@@ -114,6 +153,27 @@
 			productName = AlcoveInspired;
 			productReference = 4A6F3BCBC63D1BEAB85A181E /* AlcoveInspired.app */;
 			productType = "com.apple.product-type.application";
+		};
+		925928D1EB3095BA6B69D3AE /* NowPlayingHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9DEF1639E6EFA51DC3BEBB0A /* Build configuration list for PBXNativeTarget "NowPlayingHelper" */;
+			buildPhases = (
+				E43FDE0989C0DEA444D7D593 /* Sources */,
+				FBBF3250CE05D59EB0CE9E86 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CE954FB7525B85EAA699B7DC /* NowPlayingHelper */,
+			);
+			name = NowPlayingHelper;
+			packageProductDependencies = (
+			);
+			productName = NowPlayingHelper;
+			productReference = 7F6BA1ACFA0A9D3BFC7E1364 /* libNowPlayingHelper.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
 		};
 		0360DAA493F241459B684D3D /* AlcoveInspiredTests */ = {
 			isa = PBXNativeTarget;
@@ -151,6 +211,9 @@
 					428ADBFEAFBA5B2278F449AC = {
 						CreatedOnToolsVersion = 16.0;
 					};
+					925928D1EB3095BA6B69D3AE = {
+						CreatedOnToolsVersion = 16.0;
+					};
 					0360DAA493F241459B684D3D = {
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = 428ADBFEAFBA5B2278F449AC;
@@ -176,6 +239,7 @@
 			projectRoot = "";
 			targets = (
 				428ADBFEAFBA5B2278F449AC /* AlcoveInspired */,
+				925928D1EB3095BA6B69D3AE /* NowPlayingHelper */,
 				0360DAA493F241459B684D3D /* AlcoveInspiredTests */,
 			);
 		};
@@ -213,6 +277,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E43FDE0989C0DEA444D7D593 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -220,6 +291,11 @@
 			isa = PBXTargetDependency;
 			target = 428ADBFEAFBA5B2278F449AC /* AlcoveInspired */;
 			targetProxy = 008D241F100EA40ABC3BEC69 /* PBXContainerItemProxy */;
+		};
+		15357FB992F29267AAAA1E1B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 925928D1EB3095BA6B69D3AE /* NowPlayingHelper */;
+			targetProxy = CBCD97D088385EAFE9539216 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -297,7 +373,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
@@ -308,7 +384,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.boboduk.AlcoveInspired;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -325,7 +401,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -336,7 +412,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.boboduk.AlcoveInspired;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -350,11 +426,11 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.boboduk.AlcoveInspiredTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -369,16 +445,78 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.boboduk.AlcoveInspiredTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AlcoveInspired.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/AlcoveInspired";
+			};
+			name = Release;
+		};
+		88993FBA8298FAE4732C8DD0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 2;
+				DEFINES_MODULE = NO;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_HARDENED_RUNTIME = NO;
+				EXECUTABLE_PREFIX = lib;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = NO;
+				MACH_O_TYPE = mh_dylib;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.1.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-framework",
+					AppKit,
+					"-framework",
+					Foundation,
+				);
+				PRODUCT_NAME = NowPlayingHelper;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		3D5FE3E52D3556E0628571E4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 2;
+				DEFINES_MODULE = NO;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_HARDENED_RUNTIME = NO;
+				EXECUTABLE_PREFIX = lib;
+				GENERATE_INFOPLIST_FILE = NO;
+				MACH_O_TYPE = mh_dylib;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					AppKit,
+					"-framework",
+					Foundation,
+				);
+				PRODUCT_NAME = NowPlayingHelper;
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
@@ -408,6 +546,15 @@
 			buildConfigurations = (
 				7327E403A9FA212F747BEC3A /* Debug */,
 				32DD49A0FC75C4B043856ADD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9DEF1639E6EFA51DC3BEBB0A /* Build configuration list for PBXNativeTarget "NowPlayingHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88993FBA8298FAE4732C8DD0 /* Debug */,
+				3D5FE3E52D3556E0628571E4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

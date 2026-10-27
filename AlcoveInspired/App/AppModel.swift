@@ -25,6 +25,7 @@ final class AppModel {
     let brightness: BrightnessController
     let timer: TimerController
     let power: PowerController
+    let systemNotifications: SystemNotificationMirror
 
     /// Mirrors `MediaKeyService.State` for the settings UI.
     private(set) var mediaKeyState: MediaKeyService.State = .off
@@ -56,6 +57,7 @@ final class AppModel {
         self.timer = TimerController(settings: current.timer)
         self.power = PowerController(settings: current.power)
         self.notifications = NotificationService(permissions: permissions, timerSettings: current.timer)
+        self.systemNotifications = SystemNotificationMirror(settings: current.notifications, permissions: permissions)
     }
 
     // MARK: - Lifecycle
@@ -85,6 +87,7 @@ final class AppModel {
         timer.restore()
         if current.music.isEnabled { music.start() }
         if current.power.isEnabled { power.start() }
+        systemNotifications.start()
         configureMediaKeys()
 
         settings.observe { [weak self] new, old in
@@ -103,6 +106,7 @@ final class AppModel {
         music.stop()
         volume.stop()
         power.stop()
+        systemNotifications.stop()
         mediaKeys.stop()
         permissions.stop()
         for token in workspaceTokens {
@@ -119,6 +123,7 @@ final class AppModel {
         timer.onEvent = post
         power.onEvent = post
         notifications.onEvent = post
+        systemNotifications.onEvent = post
         music.onNotice = { [weak self] notice in self?.notifications.post(notice) }
 
         timer.onFinish = { [weak self] _ in self?.notifications.playTimerSound() }
@@ -182,6 +187,7 @@ final class AppModel {
         mediaKeys.revalidate()
         brightness.refreshAvailability()
         permissions.refreshAll()
+        systemNotifications.refreshAccess()
         log.append("app", "wake / session active")
     }
 
@@ -196,6 +202,7 @@ final class AppModel {
         timer.apply(settings: new.timer)
         power.apply(settings: new.power)
         notifications.apply(timerSettings: new.timer)
+        systemNotifications.apply(settings: new.notifications)
 
         // Live activities that were hidden come back with the current state.
         if new.music.showCompact && !old.music.showCompact { music.republish() }

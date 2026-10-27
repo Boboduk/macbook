@@ -89,6 +89,22 @@ else
     [[ -d "$lproj" ]] && cp -R "$lproj" "$APP/Contents/Resources/"
   done
 
+  # NowPlayingHelper: the system-wide "Now Playing" helper, loaded at runtime
+  # by /usr/bin/perl (see MediaRemoteBridge). Compiled for the host arch, to
+  # match the SwiftPM-built executable, and signed before the app so the
+  # bundle's signature stays valid.
+  mkdir -p "$APP/Contents/Frameworks"
+  xcrun clang \
+    -arch "$(uname -m)" \
+    -mmacosx-version-min="$TARGET" \
+    -fobjc-arc \
+    -dynamiclib \
+    -install_name "@rpath/libNowPlayingHelper.dylib" \
+    -framework AppKit -framework Foundation \
+    -o "$APP/Contents/Frameworks/libNowPlayingHelper.dylib" \
+    "$ROOT/NowPlayingHelper/NowPlayingHelper.m"
+  codesign --force --sign - "$APP/Contents/Frameworks/libNowPlayingHelper.dylib"
+
   codesign --force --sign - \
     --entitlements "$ROOT/Config/$APP_NAME.entitlements" \
     --options runtime \

@@ -21,7 +21,7 @@ struct SystemSettingsView: View {
                     value: model.permissions.isAccessibilityTrusted ? Text("Granted") : Text("Not granted"),
                     isOK: model.permissions.isAccessibilityTrusted
                 )
-                ForEach(MusicSourceKind.allCases) { source in
+                ForEach(MusicSourceKind.scriptable) { source in
                     AutomationRow(source: source)
                 }
                 NotificationPermissionRow()
@@ -165,7 +165,7 @@ enum DiagnosticsReport {
             "macOS \(ProcessInfo.processInfo.operatingSystemVersionString), \(AppInfo.hardwareModel)",
             "Notch: \(metrics.hasNotch) \(metrics.notchSize.width)x\(metrics.notchSize.height), screen width \(metrics.screenWidth)",
             "Accessibility: \(model.permissions.isAccessibilityTrusted)",
-            "Automation: " + MusicSourceKind.allCases.map { "\($0.displayName)=\(model.permissions.automation[$0]?.title ?? "?")" }.joined(separator: ", "),
+            "Automation: " + MusicSourceKind.scriptable.map { "\($0.displayName)=\(model.permissions.automation[$0]?.title ?? "?")" }.joined(separator: ", "),
             "Notifications: \(model.permissions.notifications.title)",
             "Launch at login: \(model.launchAtLogin.statusDescription)",
             "Media keys: \(model.mediaKeyState)",

@@ -62,7 +62,7 @@ final class PermissionService {
     func start() {
         refreshAccessibility()
         refreshNotifications()
-        for source in MusicSourceKind.allCases {
+        for source in MusicSourceKind.scriptable {
             refreshAutomation(for: source)
         }
         // Posted by the system whenever the Accessibility list changes.
@@ -90,7 +90,7 @@ final class PermissionService {
     func refreshAll() {
         refreshAccessibility()
         refreshNotifications()
-        for source in MusicSourceKind.allCases {
+        for source in MusicSourceKind.scriptable {
             refreshAutomation(for: source)
         }
     }
@@ -192,6 +192,7 @@ final class PermissionService {
     enum PrivacyPane: String {
         case accessibility = "Privacy_Accessibility"
         case automation = "Privacy_Automation"
+        case fullDiskAccess = "Privacy_AllFiles"
         case notifications = "Notifications"
     }
 
@@ -200,7 +201,7 @@ final class PermissionService {
         switch pane {
         case .notifications:
             urlString = "x-apple.systempreferences:com.apple.preference.notifications"
-        case .accessibility, .automation:
+        case .accessibility, .automation, .fullDiskAccess:
             urlString = "x-apple.systempreferences:com.apple.preference.security?\(pane.rawValue)"
         }
         if let url = URL(string: urlString) {

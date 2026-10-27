@@ -13,10 +13,13 @@ struct ActivitiesSettingsView: View {
             Section {
                 Toggle("Music", isOn: $store.settings.music.isEnabled)
                 if settings.music.isEnabled {
-                    Picker("Preferred player", selection: $store.settings.music.preferredSource) {
-                        Text("Automatic").tag(MusicSourcePreference.automatic)
-                        Text("Music").tag(MusicSourcePreference.appleMusic)
-                        Text("Spotify").tag(MusicSourcePreference.spotify)
+                    Toggle("Show playback from all apps", isOn: $store.settings.music.useSystemNowPlaying)
+                    if !settings.music.useSystemNowPlaying {
+                        Picker("Preferred player", selection: $store.settings.music.preferredSource) {
+                            Text("Automatic").tag(MusicSourcePreference.automatic)
+                            Text("Music").tag(MusicSourcePreference.appleMusic)
+                            Text("Spotify").tag(MusicSourcePreference.spotify)
+                        }
                     }
                     Toggle("Show beside the notch while playing", isOn: $store.settings.music.showCompact)
                     Toggle("Show track changes", isOn: $store.settings.music.peekOnTrackChange)
@@ -25,14 +28,16 @@ struct ActivitiesSettingsView: View {
                         value == 0 ? String(localized: "Hide") : SettingsFormat.duration(value)
                     }
                     Toggle("Load Spotify artwork from the internet", isOn: $store.settings.music.loadRemoteArtwork)
-                    ForEach(MusicSourceKind.allCases) { source in
-                        AutomationRow(source: source)
+                    if !settings.music.useSystemNowPlaying {
+                        ForEach(MusicSourceKind.scriptable) { source in
+                            AutomationRow(source: source)
+                        }
                     }
                 }
             } header: {
                 Text("Music")
             } footer: {
-                Text("Track details come from Music and Spotify notifications. Artwork, progress and controls need permission to control the player (Automation). Other players are not supported: macOS offers no public API for them.")
+                Text("“Show playback from all apps” reports whatever is playing anywhere — Music, Spotify, Safari, Chrome, VLC — with no permission needed. Turn it off to use only Music and Spotify through their public notifications, where artwork, progress and controls need permission to control the player (Automation).")
             }
 
             // MARK: Volume & brightness
@@ -100,11 +105,18 @@ struct ActivitiesSettingsView: View {
                 Toggle("Island notifications", isOn: $store.settings.notifications.isEnabled)
                 if settings.notifications.isEnabled {
                     SliderRow(title: "Display time", value: $store.settings.notifications.duration, range: 2...15, step: 0.5, format: SettingsFormat.seconds)
+                    Toggle("Mirror notifications from other apps", isOn: $store.settings.notifications.mirrorSystemNotifications)
+                    if settings.notifications.mirrorSystemNotifications {
+                        FullDiskAccessRow()
+                        Toggle("Show the notification text", isOn: $store.settings.notifications.showSystemNotificationText)
+                        Toggle("Dismiss the system banner (experimental)", isOn: $store.settings.notifications.dismissSystemBanners)
+                        MutedAppsView()
+                    }
                 }
             } header: {
                 Text("Notifications")
             } footer: {
-                Text("Messages from AlcoveInspired itself (timer finished, permission problems, output device changes). Notifications of other apps are not available through public macOS APIs.")
+                Text("Island banners for AlcoveInspired's own messages (timer finished, permissions, output device). Mirroring other apps reads the Notification Center database and needs Full Disk Access. To avoid a second, system banner, set those apps to the “None” alert style in System Settings › Notifications, or turn on a Focus; the experimental option tries to close the system banner automatically (needs Accessibility).")
             }
 
             // MARK: Battery
@@ -258,5 +270,83 @@ struct MediaKeysStatusRow: View {
         case .observing: return Text("Granted, observing brightness keys")
         case .replacing: return Text("Granted, replacing system HUD")
         }
+    }
+}
+
+/// Full Disk Access status for the notification mirror, with the fix.
+struct FullDiskAccessRow: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        let granted = model.systemNotifications.hasFullDiskAccess
+        LabeledContent("Full Disk Access") {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(granted ? Color.green : Color.orange)
+                    .frame(width: 7, height: 7)
+                (granted ? Text("Granted") : Text("Required to read notifications"))
+                    .foregroundStyle(.secondary)
+                if !granted {
+                    Button("Open Settings…") { model.permissions.open(.fullDiskAccess) }
+                        .controlSize(.small)
+                }
+                Button("Refresh") { model.systemNotifications.refreshAccess() }
+                    .controlSize(.small)
+            }
+        }
+    }
+}
+
+/// Per-app mute switches for mirrored notifications. Apps appear once they
+/// have sent a notification this session, plus any already muted.
+struct MutedAppsView: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        @Bindable var store = model.settings
+        let apps = appList(muted: store.settings.notifications.mutedApps)
+        DisclosureGroup("Apps") {
+            if apps.isEmpty {
+                Text("Apps appear here after they send a notification.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(apps, id: \.bundleIdentifier) { app in
+                    Toggle(isOn: binding(for: app.bundleIdentifier, store: store)) {
+                        HStack(spacing: 8) {
+                            if let icon = AppDirectory.shared.icon(for: app.bundleIdentifier) {
+                                Image(nsImage: icon).resizable().frame(width: 16, height: 16)
+                            }
+                            Text(verbatim: app.name)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private struct Row { var bundleIdentifier: String; var name: String }
+
+    private func appList(muted: [String]) -> [Row] {
+        var rows = model.systemNotifications.seenApps.map { Row(bundleIdentifier: $0.bundleIdentifier, name: $0.name) }
+        let seenIDs = Set(rows.map(\.bundleIdentifier))
+        for id in muted where !seenIDs.contains(id) {
+            rows.append(Row(bundleIdentifier: id, name: AppDirectory.shared.name(for: id)))
+        }
+        return rows
+    }
+
+    /// On = shown, Off = muted.
+    private func binding(for bundleID: String, store: SettingsStore) -> Binding<Bool> {
+        Binding(
+            get: { !store.settings.notifications.mutedApps.contains(bundleID) },
+            set: { shown in
+                if shown {
+                    store.settings.notifications.mutedApps.removeAll { $0 == bundleID }
+                } else if !store.settings.notifications.mutedApps.contains(bundleID) {
+                    store.settings.notifications.mutedApps.append(bundleID)
+                }
+            }
+        )
     }
 }

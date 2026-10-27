@@ -51,7 +51,9 @@ struct MusicPanelView: View {
             EmptyStateView(
                 symbol: "music.note",
                 title: "Nothing playing",
-                message: "Play something in Music or Spotify to control it here.",
+                message: music.usesSystemSource
+                    ? "Play something in any app to control it here."
+                    : "Play something in Music or Spotify to control it here.",
                 actionTitle: "Open Music"
             ) { music.openPlayer() }
         }
@@ -71,7 +73,7 @@ private struct NowPlayingView: View {
         HStack(alignment: .center, spacing: 14) {
             ArtworkView(size: 78, cornerRadius: 13)
                 .onTapGesture { music.openPlayer() }
-                .help(Text("Open \(snapshot.source.displayName)"))
+                .help(Text("Open \(snapshot.displayName)"))
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .top, spacing: 8) {
@@ -92,7 +94,7 @@ private struct NowPlayingView: View {
                             .lineLimit(1)
                     }
                     Spacer(minLength: 4)
-                    SourceBadge(source: snapshot.source)
+                    SourceBadge(label: snapshot.displayName)
                 }
                 .id(track.id)
                 .transition(.opacity)
@@ -111,8 +113,8 @@ private struct NowPlayingView: View {
                     IslandIconButton(symbol: "forward.fill", size: 13, label: "Next track") { music.next() }
                     Spacer(minLength: 0)
                 }
-                .disabled(music.automationStatus == .denied)
-                .opacity(music.automationStatus == .denied ? 0.4 : 1)
+                .disabled(!music.canControl)
+                .opacity(music.canControl ? 1 : 0.4)
             }
         }
         .overlay(alignment: .bottom) {
@@ -127,10 +129,10 @@ private struct NowPlayingView: View {
 }
 
 private struct SourceBadge: View {
-    let source: MusicSourceKind
+    let label: String
 
     var body: some View {
-        Text(source.displayName)
+        Text(verbatim: label)
             .font(.system(size: 9.5, weight: .semibold))
             .foregroundStyle(.white.opacity(0.65))
             .padding(.horizontal, 6)
@@ -170,7 +172,7 @@ private struct ProgressRow: View {
             ScrubBar(
                 progress: progress,
                 tint: accent,
-                isEnabled: duration != nil && music.automationStatus == .granted,
+                isEnabled: music.canSeek,
                 onCommit: { music.seek(toFraction: $0) },
                 onEditingChanged: { editing in
                     editing ? model.coordinator.beginInteraction() : model.coordinator.endInteraction()
