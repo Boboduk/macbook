@@ -40,8 +40,11 @@ final class AppModel {
     @ObservationIgnored private var workspaceTokens: [NSObjectProtocol] = []
     @ObservationIgnored private var started = false
 
-    init() {
-        let settings = SettingsStore()
+    convenience init() {
+        self.init(settings: SettingsStore())
+    }
+
+    init(settings: SettingsStore) {
         let current = settings.settings
         let log = DiagnosticsLog()
         let permissions = PermissionService()

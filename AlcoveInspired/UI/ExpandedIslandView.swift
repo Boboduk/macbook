@@ -69,6 +69,7 @@ struct ExpandedIslandView: View {
         switch context.tab {
         case .music:
             MusicPanelView()
+                .onAppear { model.music.refreshAll() }
                 .transition(.opacity)
         case .timer:
             TimerPanelView()

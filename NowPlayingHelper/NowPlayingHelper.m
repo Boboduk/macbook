@@ -50,6 +50,9 @@ static NPHSetElapsedTimeFunction NPHSetElapsedTime;
 
 static NSData *NPHLastArtwork;
 static NSUInteger NPHRefreshGeneration;
+static NSUInteger NPHRequestGeneration;
+static NSUInteger NPHLastEmittedRequest;
+static dispatch_source_t NPHWatchdog;
 
 static void NPHEmit(NSDictionary *payload) {
     NSData *json = [NSJSONSerialization dataWithJSONObject:payload options:0 error:nil];
@@ -75,10 +78,14 @@ static id NPHJSONValue(id value) {
 }
 
 static void NPHRefreshNow(void) {
+    NSUInteger request = ++NPHRequestGeneration;
     dispatch_queue_t queue = dispatch_get_main_queue();
     NPHGetPID(queue, ^(int pid) {
         NPHGetIsPlaying(queue, ^(Boolean playing) {
             NPHGetInfo(queue, ^(CFDictionaryRef cfInfo) {
+                // Late responses must not replace a more recent player state.
+                if (request < NPHLastEmittedRequest) { return; }
+                NPHLastEmittedRequest = request;
                 @autoreleasepool {
                     NSDictionary *info = (__bridge NSDictionary *)cfInfo;
                     NSMutableDictionary *output = [NSMutableDictionary dictionary];
@@ -232,6 +239,13 @@ void nph_run(void *interpreter, void *cv) {
 
         NPHEmit(@{@"type": @"ready"});
         NPHRefreshNow();
+        // Some browser sessions miss MediaRemote change notifications. Keep
+        // discovering/resynchronizing them even after an empty or paused state.
+        NPHWatchdog = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
+        dispatch_source_set_timer(NPHWatchdog, dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC),
+                                  2 * NSEC_PER_SEC, NSEC_PER_SEC / 4);
+        dispatch_source_set_event_handler(NPHWatchdog, ^{ NPHRefreshNow(); });
+        dispatch_resume(NPHWatchdog);
         NPHReadCommands();
     }
     while (true) {

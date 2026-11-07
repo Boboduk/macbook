@@ -135,3 +135,62 @@ final class SystemNotificationMirrorTests: XCTestCase {
         mirror.stop()
     }
 }
+
+@MainActor
+final class SystemPlaybackContinuityTests: XCTestCase {
+    private func update(_ state: PlaybackState = .playing, elapsed: Double = 12) -> MediaRemoteMessage {
+        .nowPlaying(MediaRemoteUpdate(snapshot: NowPlayingSnapshot(
+            source: .system,
+            track: TrackInfo(id: "video", title: "Browser video", artist: "Channel", album: "", duration: 600),
+            state: state,
+            position: PlaybackPosition(elapsed: elapsed, timestamp: Date(), rate: state == .playing ? 1 : 0),
+            playerBundleIdentifier: "com.google.Chrome", playerName: "Google Chrome"
+        ), artwork: nil, hasArtwork: false))
+    }
+
+    func testBriefEmptyMetadataDoesNotRemovePlayerAndRecoveryCancelsClear() async throws {
+        let music = MusicController(settings: .init(), permissions: PermissionService())
+        defer { music.stop() }
+        music.handleBridgeMessage(.ready)
+        music.handleBridgeMessage(update())
+        music.handleBridgeMessage(.nowPlaying(.init(snapshot: nil, artwork: nil, hasArtwork: false)))
+        XCTAssertEqual(music.track?.id, "video")
+        music.handleBridgeMessage(update(elapsed: 14))
+        try await Task.sleep(for: .milliseconds(3200))
+        XCTAssertEqual(music.track?.id, "video", "recovery cancels the pending removal")
+        XCTAssertTrue(music.canControl)
+    }
+
+    func testSustainedEmptyMetadataEventuallyRemovesStalePlayer() async throws {
+        let music = MusicController(settings: .init(), permissions: PermissionService())
+        defer { music.stop() }
+        music.handleBridgeMessage(.ready)
+        music.handleBridgeMessage(update())
+        music.handleBridgeMessage(.nowPlaying(.init(snapshot: nil, artwork: nil, hasArtwork: false)))
+        try await Task.sleep(for: .milliseconds(3200))
+        XCTAssertNil(music.snapshot)
+    }
+
+    func testPositionRefreshDoesNotKeepPausedActivityAliveAndResumeRestoresIt() {
+        let scheduler = ManualScheduler()
+        let activities = ActivityManager(scheduler: scheduler)
+        var settings = IslandSettings.default
+        settings.music.pausedTimeout = 5
+        let router = EventRouter(activities: activities, settings: settings)
+        let music = MusicController(settings: settings.music, permissions: PermissionService())
+        defer { music.stop() }
+        music.onEvent = { router.handle($0) }
+        music.handleBridgeMessage(.ready)
+        music.handleBridgeMessage(update())
+        scheduler.advance(by: 600)
+        XCTAssertNotNil(activities.liveActivities[.music], "playing video never expires")
+        music.handleBridgeMessage(update(.paused))
+        for index in 1...4 {
+            scheduler.advance(by: 2)
+            music.handleBridgeMessage(update(.paused, elapsed: Double(index)))
+        }
+        XCTAssertNil(activities.liveActivities[.music], "watchdog refreshes must not reset pause expiry")
+        music.handleBridgeMessage(update(.playing, elapsed: 30))
+        XCTAssertNotNil(activities.liveActivities[.music], "resume restores controls")
+    }
+}

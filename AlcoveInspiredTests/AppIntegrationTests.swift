@@ -290,3 +290,67 @@ final class WindowAndGeometryTests: XCTestCase {
         }
     }
 }
+
+/// Send real mouse events through a nonactivating panel containing the actual
+/// island. Controller-only tests cannot catch a parent gesture stealing clicks.
+@MainActor
+final class IslandMouseInteractionTests: XCTestCase {
+    private func fixture() -> (AppModel, IslandPanel) {
+        let defaults = UserDefaults(suiteName: "island-clicks-\(UUID().uuidString)")!
+        let model = AppModel(settings: SettingsStore(persistence: SettingsPersistence(defaults: defaults)))
+        model.coordinator.expand(tab: .music)
+        let size = model.coordinator.panelSize
+        let panel = IslandPanel(frame: CGRect(origin: CGPoint(x: 200, y: 200), size: size))
+        let host = IslandHostingView(rootView: IslandRootView(model: model))
+        host.sizingOptions = []
+        panel.contentView = host
+        panel.ignoresMouseEvents = false
+        panel.orderFrontRegardless()
+        host.layoutSubtreeIfNeeded()
+        return (model, panel)
+    }
+
+    private func click(_ point: CGPoint, in panel: IslandPanel, count: Int = 1) async throws {
+        for number in 1...count {
+            for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+                let event = try XCTUnwrap(NSEvent.mouseEvent(
+                    with: type, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                    windowNumber: panel.windowNumber, context: nil, eventNumber: number,
+                    clickCount: number, pressure: type == .leftMouseDown ? 1 : 0
+                ))
+                NSApp.postEvent(event, atStart: false)
+            }
+            try await Task.sleep(for: .milliseconds(50))
+        }
+        try await Task.sleep(for: .seconds(2))
+    }
+
+    func testHeaderButtonsReceiveClicksWithoutCollapsingIsland() async throws {
+        let (model, panel) = fixture()
+        defer { panel.orderOut(nil) }
+        try await Task.sleep(for: .milliseconds(500))
+        let frame = model.coordinator.islandFrame
+        let left = (panel.frame.width - frame.size.width) / 2 + 16 + frame.topRadius
+        let y = panel.frame.height - model.coordinator.metrics.notchSize.height / 2
+        try await click(CGPoint(x: left + 30 + 6 + 15, y: y), in: panel)
+        XCTAssertEqual(model.coordinator.controller.selectedTab, .timer)
+        XCTAssertTrue(model.coordinator.presentation.isExpanded)
+        try await click(CGPoint(x: left + 15, y: y), in: panel)
+        XCTAssertEqual(model.coordinator.controller.selectedTab, .music)
+        let right = (panel.frame.width + frame.size.width) / 2 - 16 - frame.topRadius
+        try await click(CGPoint(x: right - 24 - 6 - 12, y: y), in: panel)
+        XCTAssertTrue(model.settings.settings.general.isPinned, "pin button must receive its click")
+        XCTAssertTrue(model.coordinator.presentation.isExpanded)
+        XCTAssertFalse(model.coordinator.controller.isDismissed)
+    }
+
+    func testBackgroundTripleClickStillDismisses() async throws {
+        let (model, panel) = fixture()
+        defer { panel.orderOut(nil) }
+        try await Task.sleep(for: .milliseconds(500))
+        let point = CGPoint(x: panel.frame.width / 2,
+                            y: panel.frame.height - model.coordinator.islandFrame.size.height + 4)
+        try await click(point, in: panel, count: 3)
+        XCTAssertEqual(model.coordinator.presentation, .hidden)
+    }
+}

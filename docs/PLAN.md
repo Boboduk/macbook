@@ -71,10 +71,11 @@ AlcoveInspired (macOS-приложение, AppKit + SwiftUI)
   только SwiftUI-содержимое. Окно не меняет размер во время анимаций, поэтому нет мерцания.
 * **Клики проходят сквозь окно.** `ignoresMouseEvents` переключается по положению курсора
   относительно *текущей* фигуры острова (глобальный монитор `mouseMoved` не требует разрешений).
-* **Ноль опроса в покое.** Все источники событийные: CoreAudio property listeners,
+* **Событийные источники.** CoreAudio property listeners,
   распределённые уведомления Music/Spotify, IOKit power source notifications, NSWorkspace,
   `didChangeScreenParametersNotification`. Таймеры UI (`TimelineView`) работают только пока
-  виден соответствующий элемент.
+  виден соответствующий элемент. Для MediaRemote есть резервная проверка раз в 2 секунды,
+  чтобы восстанавливать пропущенные уведомления браузеров.
 * **Индикатор воспроизведения на Core Animation**: бесконечные `CABasicAnimation` выполняются
   в render server и почти не нагружают CPU приложения.
 

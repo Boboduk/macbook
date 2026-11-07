@@ -38,21 +38,13 @@ private struct IslandBody: View {
             .frame(width: frame.size.width, height: frame.size.height, alignment: .top)
             .clipShape(shape)
             .background {
-                shape
-                    .fill(Color.black)
-                    .shadow(color: .black.opacity(shadowOpacity(for: presentation)), radius: 18, x: 0, y: 8)
+                IslandBackgroundView(
+                    shape: shape,
+                    shadowOpacity: shadowOpacity(for: presentation),
+                    onTap: { coordinator.tap() },
+                    onDismiss: { coordinator.dismiss() }
+                )
             }
-            .contentShape(shape)
-            .gesture(
-                TapGesture(count: 3)
-                    .exclusively(before: TapGesture(count: 1))
-                    .onEnded { value in
-                        switch value {
-                        case .first: coordinator.dismiss()
-                        case .second: coordinator.tap()
-                        }
-                    }
-            )
             .opacity(frame.isVisible ? 1 : 0)
             .accessibilityElement(children: .contain)
             .accessibilityLabel(Text("Island"))
@@ -66,6 +58,32 @@ private struct IslandBody: View {
         case .compact: return 0.25
         case .banner, .expanded: return 0.5
         }
+    }
+}
+
+/// Background gestures must not participate in the gesture hierarchy of the
+/// foreground buttons and sliders. Only clicks on unused space reach this view.
+struct IslandBackgroundView: View {
+    let shape: IslandShape
+    let shadowOpacity: Double
+    let onTap: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        shape
+            .fill(Color.black)
+            .shadow(color: .black.opacity(shadowOpacity), radius: 18, x: 0, y: 8)
+            .contentShape(shape)
+            .gesture(
+                TapGesture(count: 3)
+                    .exclusively(before: TapGesture(count: 1))
+                    .onEnded { value in
+                        switch value {
+                        case .first: onDismiss()
+                        case .second: onTap()
+                        }
+                    }
+            )
     }
 }
 

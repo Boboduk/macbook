@@ -73,6 +73,7 @@ final class MusicController {
     @ObservationIgnored private var artworkTask: Task<Void, Never>?
     @ObservationIgnored private var isStarted = false
     @ObservationIgnored private var systemTimeout: DispatchWorkItem?
+    @ObservationIgnored private var emptySystemState: DispatchWorkItem?
 
     /// Which back end is currently in control.
     private enum Backend { case pending, system, scriptable }
@@ -127,6 +128,8 @@ final class MusicController {
     }
 
     func stop() {
+        emptySystemState?.cancel()
+        emptySystemState = nil
         systemTimeout?.cancel()
         systemTimeout = nil
         bridge.onMessage = nil
@@ -228,6 +231,8 @@ final class MusicController {
         guard backend != .scriptable else { return }
         systemTimeout?.cancel()
         systemTimeout = nil
+        emptySystemState?.cancel()
+        emptySystemState = nil
         bridge.onMessage = nil
         bridge.stop()
         snapshots.removeValue(forKey: .system)
@@ -236,7 +241,7 @@ final class MusicController {
         recompute(announceTrackChange: false)
     }
 
-    private func handleBridgeMessage(_ message: MediaRemoteMessage) {
+    func handleBridgeMessage(_ message: MediaRemoteMessage) {
         switch message {
         case .ready:
             systemTimeout?.cancel()
@@ -256,6 +261,8 @@ final class MusicController {
     private func applySystemUpdate(_ update: MediaRemoteUpdate) {
         let now = Date()
         if let snapshot = update.snapshot, let track = snapshot.track {
+            emptySystemState?.cancel()
+            emptySystemState = nil
             let key = "system:\(track.id)"
             if update.hasArtwork {
                 if let data = update.artwork, let image = NSImage(data: data) {
@@ -267,8 +274,19 @@ final class MusicController {
             snapshots[.system] = snapshot
             updatedAt[.system] = now
         } else {
-            snapshots[.system] = nil
-            updatedAt[.system] = nil
+            // Browsers briefly clear metadata when switching videos/ads.
+            // Confirm sustained emptiness instead of removing controls at once.
+            guard snapshots[.system] != nil, emptySystemState == nil else { return }
+            let clear = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                self.emptySystemState = nil
+                self.snapshots[.system] = nil
+                self.updatedAt[.system] = nil
+                self.recompute(announceTrackChange: false)
+            }
+            emptySystemState = clear
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: clear)
+            return
         }
         recompute(announceTrackChange: true)
     }
@@ -449,7 +467,8 @@ final class MusicController {
     }
 
     private func recompute(announceTrackChange: Bool) {
-        let previousTrack = snapshot?.track
+        let previous = snapshot
+        let previousTrack = previous?.track
         let newSnapshot = chooseSource().flatMap { snapshots[$0] }
         if newSnapshot != snapshot {
             snapshot = newSnapshot
@@ -466,7 +485,15 @@ final class MusicController {
         } else if artwork != nil {
             setArtwork(nil, key: "")
         }
-        onEvent?(.nowPlaying(newSnapshot))
+        // Position/artwork refreshes update the UI, but must not restart the
+        // paused activity's expiry on every watchdog tick.
+        if previous?.track != newSnapshot?.track
+            || previous?.state != newSnapshot?.state
+            || previous?.source != newSnapshot?.source
+            || previous?.playerBundleIdentifier != newSnapshot?.playerBundleIdentifier
+            || previous?.playerName != newSnapshot?.playerName {
+            onEvent?(.nowPlaying(newSnapshot))
+        }
     }
 
     private func commandSource() -> MusicSourceKind? {
