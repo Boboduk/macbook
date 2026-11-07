@@ -26,7 +26,7 @@ public struct ExpandedContext: Equatable, Sendable {
 
 /// Everything the UI needs to draw the island. Produced by `IslandController`.
 public enum IslandPresentation: Equatable, Sendable {
-    /// Suppressed (disabled, or hidden in a full-screen app).
+    /// Temporarily dismissed, disabled, or hidden in a full-screen app.
     case hidden
     /// State A/B: plain black shape matching the notch.
     case idle(hovered: Bool)

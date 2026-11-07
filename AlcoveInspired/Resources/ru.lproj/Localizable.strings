@@ -109,7 +109,7 @@
 "Keep expanded (pin)" = "Держать раскрытым (закрепить)";
 "Swipe gestures" = "Жесты смахивания";
 "Haptic feedback on swipe" = "Тактильный отклик при смахивании";
-"Click the island to expand or collapse it. Swipe down on the island to expand, up to collapse, left or right to change tracks." = "Щелчок по острову раскрывает или сворачивает его. Смахивание вниз раскрывает, вверх — сворачивает, влево и вправо — переключает треки.";
+"Click the island to expand or collapse it. Swipe up or triple-click its background to hide it until you hover again or a new HUD or banner arrives. Swipe down to expand, left or right to change tracks." = "Щелчок по острову раскрывает или сворачивает его. Смахивание вверх или три быстрых щелчка по его фону скрывают остров до повторного наведения или нового HUD либо баннера. Смахивание вниз раскрывает, влево и вправо — переключает треки.";
 "Live activities" = "Live-активности";
 "Show live activities beside the notch" = "Показывать live-активности у выреза";
 "Music and timers appear in the compact island while they run. HUDs and notifications temporarily take their place." = "Музыка и таймеры видны в компактном острове, пока работают. HUD и уведомления временно занимают их место.";

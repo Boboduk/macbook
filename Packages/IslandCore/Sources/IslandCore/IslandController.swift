@@ -9,7 +9,7 @@ import Foundation
 /// ```
 ///            hover (delay)        cursor leaves (delay)
 ///   idle ───────────────▶ expanded ────────────────▶ idle / compact / banner
-///    │  ▲      tap             ▲  │ tap, swipe up, click outside
+///    │  ▲      tap             ▲  │ tap, click outside
 ///    │  └──────────────────────┘  │
 ///    └─ live activity ▶ compact   └─ pinned: stays until unpinned
 /// ```
@@ -53,6 +53,8 @@ public final class IslandController {
     public private(set) var expansion: ExpansionReason?
     public private(set) var isPinned = false
     public private(set) var isSuppressed = false
+    /// Temporary gesture dismissal; live activities continue in the background.
+    public private(set) var isDismissed = false
     public private(set) var selectedTab: IslandTab?
 
     public var behavior: Behavior {
@@ -70,16 +72,18 @@ public final class IslandController {
     private var hoverToken: SchedulerToken?
     private var collapseToken: SchedulerToken?
     private var interactionCount = 0
+    private var observedTransient: Activity?
 
     public init(scheduler: IslandScheduler, activities: ActivityManager? = nil, behavior: Behavior = Behavior()) {
         self.scheduler = scheduler
         self.activities = activities ?? ActivityManager(scheduler: scheduler)
         self.behavior = behavior
-        self.activities.onChange = { [weak self] in self?.reevaluate() }
+        self.observedTransient = self.activities.currentTransient
+        self.activities.onChange = { [weak self] in self?.activitiesChanged() }
         self.presentation = resolve()
     }
 
-    public var isExpanded: Bool { expansion != nil || isPinned }
+    public var isExpanded: Bool { !isDismissed && (expansion != nil || isPinned) }
     public var isInteracting: Bool { interactionCount > 0 }
 
     // MARK: - Inputs
@@ -88,6 +92,7 @@ public final class IslandController {
         guard hovering != isHovering else { return }
         isHovering = hovering
         if hovering {
+            isDismissed = false
             cancelCollapse()
             scheduleHoverExpansionIfNeeded()
         } else {
@@ -125,6 +130,7 @@ public final class IslandController {
     }
 
     public func expand(tab: IslandTab? = nil, reason: ExpansionReason = .programmatic) {
+        isDismissed = false
         cancelHoverExpansion()
         cancelCollapse()
         if expansion == nil {
@@ -137,16 +143,29 @@ public final class IslandController {
         reevaluate()
     }
 
-    /// Explicit collapse (menu command, swipe up). Also unpins.
+    /// Explicit collapse (menu command). Also unpins.
     public func collapse() {
         isPinned = false
         collapseNow()
+    }
+
+    /// Hide until the cursor leaves and re-enters, a new transient arrives,
+    /// or the user explicitly expands the island. Preserve pinning and timers.
+    public func dismiss() {
+        guard !isSuppressed, !isDismissed else { return }
+        isDismissed = true
+        cancelHoverExpansion()
+        cancelCollapse()
+        expansion = nil
+        updateHold()
+        reevaluate()
     }
 
     public func setPinned(_ pinned: Bool) {
         guard pinned != isPinned else { return }
         isPinned = pinned
         if pinned {
+            isDismissed = false
             cancelCollapse()
             if expansion == nil { expansion = .programmatic; selectedTab = preferredTab() }
         } else if !isHovering && interactionCount == 0 {
@@ -194,22 +213,15 @@ public final class IslandController {
 
     @discardableResult
     public func handleSwipe(_ direction: SwipeDirection) -> SwipeOutcome {
-        guard behavior.swipeGestures, !isSuppressed else { return .none }
+        guard behavior.swipeGestures, !isSuppressed, !isDismissed else { return .none }
         switch direction {
         case .down:
             guard expansion == nil, !isPinned else { return .none }
             expand(tab: nil, reason: .gesture)
             return .expanded
         case .up:
-            if expansion != nil, !isPinned {
-                collapseNow()
-                return .collapsed
-            }
-            if expansion == nil, let transient = activities.currentTransient {
-                activities.end(transient.id)
-                return .dismissed
-            }
-            return .none
+            dismiss()
+            return .dismissed
         case .left, .right:
             guard isShowingMusic else { return .none }
             return direction == .left ? .nextTrack : .previousTrack
@@ -226,8 +238,20 @@ public final class IslandController {
 
     // MARK: - Resolution
 
+    private func activitiesChanged() {
+        let transient = activities.currentTransient
+        // Live playback/progress updates and expiry must not undo a dismissal.
+        // A new or updated HUD/banner is an event worth showing again.
+        if transient != nil, transient != observedTransient {
+            isDismissed = false
+        }
+        observedTransient = transient
+        updateHold()
+        reevaluate()
+    }
+
     private func resolve() -> IslandPresentation {
-        if isSuppressed { return .hidden }
+        if isSuppressed || isDismissed { return .hidden }
         let transient = activities.currentTransient
         if expansion != nil || isPinned {
             let tabs = behavior.availableTabs
@@ -271,7 +295,7 @@ public final class IslandController {
     // MARK: - Timers
 
     private func scheduleHoverExpansionIfNeeded() {
-        guard behavior.hover == .expand, expansion == nil, !isPinned, !isSuppressed else { return }
+        guard behavior.hover == .expand, expansion == nil, !isPinned, !isSuppressed, !isDismissed else { return }
         // A banner is being read: hovering holds it instead of expanding over it.
         if let transient = activities.currentTransient, transient.style == .banner { return }
         cancelHoverExpansion()
@@ -316,7 +340,7 @@ public final class IslandController {
     /// Transients stay while the user reads them in the collapsed island.
     /// In the expanded island they are only overlays and expire normally.
     private func updateHold() {
-        let held = (isHovering || interactionCount > 0) && !isExpanded
+        let held = !isDismissed && !isSuppressed && (isHovering || interactionCount > 0) && !isExpanded
         activities.setHold(held)
     }
 }

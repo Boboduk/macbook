@@ -43,7 +43,16 @@ private struct IslandBody: View {
                     .shadow(color: .black.opacity(shadowOpacity(for: presentation)), radius: 18, x: 0, y: 8)
             }
             .contentShape(shape)
-            .onTapGesture { coordinator.tap() }
+            .gesture(
+                TapGesture(count: 3)
+                    .exclusively(before: TapGesture(count: 1))
+                    .onEnded { value in
+                        switch value {
+                        case .first: coordinator.dismiss()
+                        case .second: coordinator.tap()
+                        }
+                    }
+            )
             .opacity(frame.isVisible ? 1 : 0)
             .accessibilityElement(children: .contain)
             .accessibilityLabel(Text("Island"))

@@ -125,6 +125,10 @@ final class IslandCoordinator {
         controller.tap()
     }
 
+    func dismiss() {
+        controller.dismiss()
+    }
+
     func tapOutside() {
         controller.tapOutside()
     }

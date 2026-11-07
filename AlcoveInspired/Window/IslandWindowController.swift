@@ -88,10 +88,13 @@ final class IslandWindowController {
     /// island grows the hit area grows at once, when it shrinks the hit area
     /// shrinks at once — so a collapsing island never swallows clicks).
     private func interactiveRect() -> CGRect {
-        guard coordinator.presentation != .hidden else { return .zero }
+        let controller = coordinator.controller
+        guard !controller.isSuppressed else { return .zero }
         // An invisible idle pill (display without a notch) still has a hover
         // area, so the user can reveal it by moving to the top center.
-        let frame = coordinator.islandFrame
+        let frame = controller.isDismissed
+            ? IslandLayout.frame(for: .idle(hovered: false), metrics: coordinator.metrics, config: coordinator.layoutConfig)
+            : coordinator.islandFrame
         let island = IslandLayout.islandRect(size: frame.size, inPanelOfSize: panel.frame.size)
         var rect = island.offsetBy(dx: panel.frame.minX, dy: panel.frame.minY)
         rect = rect.insetBy(dx: -hoverMargin, dy: -hoverMargin)
@@ -107,12 +110,12 @@ final class IslandWindowController {
         }
         mouseTracker.update()
         // Keep the click-through state in sync with the new island size.
-        panel.ignoresMouseEvents = !mouseTracker.isInside
+        panel.ignoresMouseEvents = coordinator.presentation == .hidden || !mouseTracker.isInside
     }
 
     private func hoverChanged(_ inside: Bool) {
-        panel.ignoresMouseEvents = !inside
         coordinator.hoverChanged(inside)
+        panel.ignoresMouseEvents = coordinator.presentation == .hidden || !inside
     }
 
     // MARK: - Environment

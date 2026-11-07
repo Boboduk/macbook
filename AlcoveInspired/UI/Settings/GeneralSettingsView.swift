@@ -50,7 +50,7 @@ struct GeneralSettingsView: View {
             } header: {
                 Text("Interaction")
             } footer: {
-                Text("Click the island to expand or collapse it. Swipe down on the island to expand, up to collapse, left or right to change tracks.")
+                Text("Click the island to expand or collapse it. Swipe up or triple-click its background to hide it until you hover again or a new HUD or banner arrives. Swipe down to expand, left or right to change tracks.")
             }
 
             Section {

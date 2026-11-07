@@ -189,17 +189,79 @@ final class IslandControllerTests: XCTestCase {
         XCTAssertEqual(controller.handleSwipe(.down), .expanded)
         XCTAssertEqual(controller.handleSwipe(.down), .none)
         XCTAssertEqual(controller.handleSwipe(.right), .previousTrack, "music tab is the default page")
-        XCTAssertEqual(controller.handleSwipe(.up), .collapsed)
+        XCTAssertEqual(controller.handleSwipe(.up), .dismissed)
+        XCTAssertEqual(controller.presentation, .hidden)
 
         activities.upsert(Fixtures.notice("n"))
         XCTAssertEqual(controller.handleSwipe(.up), .dismissed)
-        XCTAssertEqual(controller.presentation, .idle(hovered: false))
+        XCTAssertEqual(controller.presentation, .hidden)
 
+        activities.end(.notice("n"))
         activities.upsert(Fixtures.live(.music, kind: .music))
+        controller.setHovering(true)
         XCTAssertEqual(controller.handleSwipe(.left), .nextTrack)
 
         controller.behavior.swipeGestures = false
         XCTAssertEqual(controller.handleSwipe(.down), .none)
+    }
+
+    func testDismissStaysHiddenUntilCursorReenters() {
+        activities.upsert(Fixtures.live(.music, kind: .music))
+        controller.setHovering(true)
+        controller.dismiss()
+        controller.setHovering(true)
+        scheduler.advance(by: 5)
+        XCTAssertEqual(controller.presentation, .hidden, "pending hover expansion was cancelled")
+        XCTAssertNotNil(activities.primaryLive, "dismissal does not stop music")
+        controller.setHovering(false)
+        XCTAssertEqual(controller.presentation, .hidden)
+        controller.setHovering(true)
+        XCTAssertFalse(controller.isDismissed)
+        XCTAssertEqual(controller.presentation.focusedActivity?.id, .music)
+    }
+
+    func testLiveUpdatesAndExpiryDoNotRevealDismissedIsland() {
+        activities.upsert(Fixtures.hud(duration: 1))
+        controller.setHovering(true)
+        controller.dismiss()
+        activities.upsert(Fixtures.live(.timer, kind: .timer))
+        XCTAssertEqual(controller.presentation, .hidden)
+        scheduler.advance(by: 2)
+        XCTAssertNil(activities.currentTransient, "hidden HUDs must not be held under the cursor")
+        XCTAssertEqual(controller.presentation, .hidden)
+        XCTAssertNotNil(activities.primaryLive, "timer continues in the background")
+    }
+
+    func testNewOrUpdatedTransientRevealsIsland() {
+        activities.upsert(Fixtures.hud(value: 0.5))
+        controller.dismiss()
+        scheduler.advance(by: 0.1)
+        activities.upsert(Fixtures.hud(value: 0.7))
+        XCTAssertFalse(controller.isDismissed)
+        XCTAssertEqual(controller.presentation.focusedActivity?.id, .volumeHUD)
+        controller.dismiss()
+        activities.upsert(Fixtures.notice("new", priority: .critical))
+        XCTAssertEqual(controller.presentation.focusedActivity?.id, .notice("new"))
+    }
+
+    func testDismissPinnedIslandPreservesPinningAndExplicitExpansionRestores() {
+        controller.setPinned(true)
+        XCTAssertEqual(controller.handleSwipe(.up), .dismissed)
+        XCTAssertEqual(controller.presentation, .hidden)
+        XCTAssertTrue(controller.isPinned)
+        XCTAssertFalse(controller.isExpanded)
+        controller.expand(tab: .timer)
+        XCTAssertTrue(controller.presentation.isExpanded)
+        XCTAssertFalse(controller.isDismissed)
+        XCTAssertEqual(controller.selectedTab, .timer)
+    }
+
+    func testNewEventCannotBypassSuppression() {
+        controller.dismiss()
+        controller.setSuppressed(true)
+        activities.upsert(Fixtures.notice("new"))
+        XCTAssertEqual(controller.presentation, .hidden)
+        XCTAssertEqual(controller.handleSwipe(.up), .none)
     }
 
     func testInteractionPreventsCollapseAndExpiry() {
